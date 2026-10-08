@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Administration — P.R.A.M.A.N</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="brand-badge">Forensic Integrity</span>
+        <div class="sidebar-title">
+          <span>🛡️</span> P.R.A.M.A.N
+        </div>
+        <div class="sidebar-subtitle">Portal for Recording and Managing Authentic Nodes</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Evidence Workspace</div>
+        <a href="dashboard.html" class="nav-item">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="evidence.html" class="nav-item">
+          <span class="nav-icon">📁</span>
+          <span>Evidence Vault</span>
+        </a>
+        <a href="upload.html" id="nav-upload" class="nav-item">
+          <span class="nav-icon">📤</span>
+          <span>Upload Evidence</span>
+        </a>
+        <a href="custody.html" class="nav-item">
+          <span class="nav-icon">⛓️</span>
+          <span>Chain of Custody</span>
+        </a>
+
+        <div class="nav-section-title">Administration</div>
+        <a href="audit.html" id="nav-audit" class="nav-item">
+          <span class="nav-icon">📜</span>
+          <span>Audit Logs</span>
+        </a>
+        <a href="users.html" id="nav-users" class="nav-item active">
+          <span class="nav-icon">👥</span>
+          <span>User Management</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" id="sidebar-user-avatar">AD</div>
+          <div class="user-info">
+            <div class="user-name" id="sidebar-user-name">Loading...</div>
+            <span class="user-role-tag" id="sidebar-user-role">...</span>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-logout">
+          <span>🚪</span> Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <header class="top-bar">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <button id="mobile-toggle" class="mobile-nav-toggle">☰</button>
+          <div class="page-title-group">
+            <h1>User Accounts & Access Control</h1>
+            <p>Administer authorized roles, credentials, and active system custodians</p>
+          </div>
+        </div>
+        <div class="top-bar-actions">
+          <button id="btn-open-add-user" class="btn btn-primary btn-sm">
+            <span>+</span> Add Authorized User
+          </button>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Users Table Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>👥</span> Authorized Node Officers
+            </div>
+            <span id="user-count-badge" class="badge badge-info">0 Total Users</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Officer Name</th>
+                  <th>Email Address</th>
+                  <th>Assigned Role</th>
+                  <th>Status</th>
+                  <th>Registered At</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody">
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-secondary);">Loading user directory...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Add User Modal -->
+  <div class="modal-backdrop" id="modal-add-user">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Create Authorized User Account</h3>
+        <span class="modal-close" id="btn-close-add-user">&times;</span>
+      </div>
+      <form id="form-add-user">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="user-name">Full Name <span class="required">*</span></label>
+            <input type="text" id="user-name" class="form-control" placeholder="e.g. Officer Alex Vance" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="user-email">Email Address <span class="required">*</span></label>
+            <input type="email" id="user-email" class="form-control" placeholder="e.g. avance@praman.com" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="user-password">Initial Password <span class="required">*</span></label>
+            <input type="password" id="user-password" class="form-control" placeholder="Minimum 6 characters" required minlength="6">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="user-role">System Role <span class="required">*</span></label>
+            <select id="user-role" class="form-control" required>
+              <option value="investigator">Investigator (Intake & Transfers)</option>
+              <option value="forensic">Forensic Officer (Verification & Lab Analysis)</option>
+              <option value="court_officer">Court Officer (Judicial Review & Admissibility)</option>
+              <option value="admin">Administrator (Full Control & Auditing)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-add-user">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-user">Create User Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/users.js"></script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Audit Trail — P.R.A.M.A.N</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="brand-badge">Forensic Integrity</span>
+        <div class="sidebar-title">
+          <span>🛡️</span> P.R.A.M.A.N
+        </div>
+        <div class="sidebar-subtitle">Portal for Recording and Managing Authentic Nodes</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Evidence Workspace</div>
+        <a href="dashboard.html" class="nav-item">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="evidence.html" class="nav-item">
+          <span class="nav-icon">📁</span>
+          <span>Evidence Vault</span>
+        </a>
+        <a href="upload.html" id="nav-upload" class="nav-item">
+          <span class="nav-icon">📤</span>
+          <span>Upload Evidence</span>
+        </a>
+        <a href="custody.html" class="nav-item">
+          <span class="nav-icon">⛓️</span>
+          <span>Chain of Custody</span>
+        </a>
+
+        <div class="nav-section-title">Administration</div>
+        <a href="audit.html" id="nav-audit" class="nav-item active">
+          <span class="nav-icon">📜</span>
+          <span>Audit Logs</span>
+        </a>
+        <a href="users.html" id="nav-users" class="nav-item">
+          <span class="nav-icon">👥</span>
+          <span>User Management</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" id="sidebar-user-avatar">AD</div>
+          <div class="user-info">
+            <div class="user-name" id="sidebar-user-name">Loading...</div>
+            <span class="user-role-tag" id="sidebar-user-role">...</span>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-logout">
+          <span>🚪</span> Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <header class="top-bar">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <button id="mobile-toggle" class="mobile-nav-toggle">☰</button>
+          <div class="page-title-group">
+            <h1>System Audit Trail & Compliance</h1>
+            <p>Chronological log of logins, access queries, modifications, and hash checks</p>
+          </div>
+        </div>
+        <div class="top-bar-actions">
+          <button id="btn-export-xml" class="btn btn-primary btn-sm">
+            <span>📥</span> Export Audit Trail (XML)
+          </button>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Filter Card -->
+        <div class="card" style="padding: 18px 24px;">
+          <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <label class="form-label" style="margin-bottom: 0;" for="filter-audit-action">Filter Action:</label>
+            <select id="filter-audit-action" class="form-control" style="max-width: 280px;">
+              <option value="">All Audit Events</option>
+              <option value="LOGIN_SUCCESS">LOGIN_SUCCESS</option>
+              <option value="LOGIN_FAILED">LOGIN_FAILED</option>
+              <option value="LOGOUT">LOGOUT</option>
+              <option value="EVIDENCE_UPLOADED">EVIDENCE_UPLOADED</option>
+              <option value="EVIDENCE_VIEWED">EVIDENCE_VIEWED</option>
+              <option value="EVIDENCE_VERIFIED">EVIDENCE_VERIFIED</option>
+              <option value="EVIDENCE_TRANSFERRED">EVIDENCE_TRANSFERRED</option>
+              <option value="STATUS_CHANGED">STATUS_CHANGED</option>
+              <option value="USER_CREATED">USER_CREATED</option>
+              <option value="USER_DEACTIVATED">USER_DEACTIVATED</option>
+              <option value="USER_ACTIVATED">USER_ACTIVATED</option>
+              <option value="XML_EXPORTED">XML_EXPORTED</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Audit Table Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>📜</span> Security Event Ledger
+            </div>
+            <span style="font-size: 12px; color: var(--text-secondary);">FIPS compliant immutable logging</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Action Event</th>
+                  <th>Evidence ID</th>
+                  <th>User / Role</th>
+                  <th>Details</th>
+                  <th>IP Address</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody id="audit-tbody">
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-secondary);">Loading audit trail...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="pagination">
+            <div class="pagination-info" id="audit-page-info">Showing records...</div>
+            <div class="pagination-controls">
+              <button id="btn-audit-prev" class="btn btn-secondary btn-sm" disabled>Previous</button>
+              <button id="btn-audit-next" class="btn btn-secondary btn-sm" disabled>Next</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/audit.js"></script>
+</body>
+</html>

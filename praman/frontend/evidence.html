@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evidence Vault — P.R.A.M.A.N</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="brand-badge">Forensic Integrity</span>
+        <div class="sidebar-title">
+          <span>🛡️</span> P.R.A.M.A.N
+        </div>
+        <div class="sidebar-subtitle">Portal for Recording and Managing Authentic Nodes</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Evidence Workspace</div>
+        <a href="dashboard.html" class="nav-item">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="evidence.html" class="nav-item active">
+          <span class="nav-icon">📁</span>
+          <span>Evidence Vault</span>
+        </a>
+        <a href="upload.html" id="nav-upload" class="nav-item">
+          <span class="nav-icon">📤</span>
+          <span>Upload Evidence</span>
+        </a>
+        <a href="custody.html" class="nav-item">
+          <span class="nav-icon">⛓️</span>
+          <span>Chain of Custody</span>
+        </a>
+
+        <div class="nav-section-title">Administration</div>
+        <a href="audit.html" id="nav-audit" class="nav-item">
+          <span class="nav-icon">📜</span>
+          <span>Audit Logs</span>
+        </a>
+        <a href="users.html" id="nav-users" class="nav-item">
+          <span class="nav-icon">👥</span>
+          <span>User Management</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" id="sidebar-user-avatar">AD</div>
+          <div class="user-info">
+            <div class="user-name" id="sidebar-user-name">Loading...</div>
+            <span class="user-role-tag" id="sidebar-user-role">...</span>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-logout">
+          <span>🚪</span> Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <header class="top-bar">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <button id="mobile-toggle" class="mobile-nav-toggle">☰</button>
+          <div class="page-title-group">
+            <h1>Digital Evidence Repository</h1>
+            <p>Cryptographically hashed records and forensic custody inventory</p>
+          </div>
+        </div>
+        <div class="top-bar-actions">
+          <a href="upload.html" class="btn btn-primary btn-sm">
+            <span>+</span> Upload New Evidence
+          </a>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Search & Filter Controls Card -->
+        <div class="card" style="padding: 18px 24px;">
+          <div class="search-bar-row">
+            <div class="search-input-wrap">
+              <input type="text" id="search-input" class="form-control" placeholder="Search by Title, ID, Case #, or description...">
+            </div>
+
+            <select id="filter-status" class="form-control filter-select">
+              <option value="">All Statuses</option>
+              <option value="Uploaded">Uploaded</option>
+              <option value="Under Review">Under Review</option>
+              <option value="Assigned">Assigned</option>
+              <option value="Verified">Verified</option>
+              <option value="Archived">Archived</option>
+            </select>
+
+            <select id="filter-type" class="form-control filter-select">
+              <option value="">All Categories</option>
+              <option value="Document">Document</option>
+              <option value="Image">Image</option>
+              <option value="Audio">Audio</option>
+              <option value="Video">Video</option>
+              <option value="Disk Image">Disk Image</option>
+              <option value="Memory Dump">Memory Dump</option>
+              <option value="Network Log">Network Log</option>
+              <option value="Other">Other</option>
+            </select>
+
+            <input type="text" id="filter-case" class="form-control filter-select" placeholder="Filter by Case #">
+          </div>
+        </div>
+
+        <!-- Evidence Table Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>📋</span> Evidence Catalog
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Evidence ID</th>
+                  <th>Title</th>
+                  <th>Case #</th>
+                  <th>Category</th>
+                  <th>Current Holder</th>
+                  <th>Status</th>
+                  <th>Integrity</th>
+                  <th>Recorded At</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="evidence-tbody">
+                <tr>
+                  <td colspan="9" style="text-align: center; padding: 24px; color: var(--text-secondary);">Loading evidence records...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="pagination">
+            <div class="pagination-info" id="pagination-info">Showing records...</div>
+            <div class="pagination-controls">
+              <button id="btn-prev" class="btn btn-secondary btn-sm" disabled>Previous</button>
+              <button id="btn-next" class="btn btn-secondary btn-sm" disabled>Next</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/evidence.js"></script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Court Evidence Review Report — P.R.A.M.A.N</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    @media print {
+      .sidebar, .top-bar, .no-print {
+        display: none !important;
+      }
+      .main-area {
+        margin-left: 0 !important;
+      }
+      .content-container {
+        padding: 0 !important;
+      }
+      .card {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="brand-badge" style="background: rgba(201, 130, 15, 0.16); color: #f59e0b;">Judicial Chamber</span>
+        <div class="sidebar-title">
+          <span>⚖️</span> P.R.A.M.A.N
+        </div>
+        <div class="sidebar-subtitle">Court Evidence Admissibility & Verification Node</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Judicial Proceedings</div>
+        <a href="court-dashboard.html" class="nav-item">
+          <span class="nav-icon">⚖️</span>
+          <span>Court Dashboard</span>
+        </a>
+        <a href="court-evidence.html" class="nav-item">
+          <span class="nav-icon">📜</span>
+          <span>Court Evidence</span>
+        </a>
+        <a href="court-review.html" class="nav-item">
+          <span class="nav-icon">🔍</span>
+          <span>Court Review</span>
+        </a>
+        <a href="custody.html" class="nav-item">
+          <span class="nav-icon">⛓️</span>
+          <span>Chain of Custody</span>
+        </a>
+        <a href="court-report.html" class="nav-item active">
+          <span class="nav-icon">🖨️</span>
+          <span>Court Reports</span>
+        </a>
+        <a href="court-activity.html" class="nav-item">
+          <span class="nav-icon">⚡</span>
+          <span>Court Activity</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" id="sidebar-user-avatar" style="border-color: #f59e0b; background: #1f2937;">CO</div>
+          <div class="user-info">
+            <div class="user-name" id="sidebar-user-name">Loading Officer...</div>
+            <span class="user-role-tag" id="sidebar-user-role" style="color: #f59e0b;">Court Officer</span>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-logout">
+          <span>🚪</span> Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <header class="top-bar no-print">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <button id="mobile-toggle" class="mobile-nav-toggle">☰</button>
+          <div class="page-title-group">
+            <h1>Official Court Evidence Review Certificate</h1>
+            <p>Certified cryptographic integrity review & chain of custody summary</p>
+          </div>
+        </div>
+        <div class="top-bar-actions">
+          <button id="btn-print-report" class="btn btn-primary btn-sm">
+            <span>🖨️</span> Print / Save PDF
+          </button>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Printable Report Sheet -->
+        <div class="card" style="max-width: 860px; margin: 0 auto; padding: 36px 40px;">
+          <!-- Formal Header -->
+          <div style="border-bottom: 2px solid var(--navy-900); padding-bottom: 20px; margin-bottom: 24px; text-align: center;">
+            <div style="font-size: 28px; margin-bottom: 6px;">⚖️</div>
+            <h2 style="font-size: 20px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--navy-900);">
+              P.R.A.M.A.N Digital Evidence Review Certificate
+            </h2>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+              Judicial Admissibility & Cryptographic Integrity Verification Report
+            </p>
+          </div>
+
+          <!-- Section 1: Identification & Metadata -->
+          <div style="margin-bottom: 24px;">
+            <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">
+              1. Evidentiary Identity & Seizure Records
+            </h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+              <div><strong>Case Number:</strong> <span id="rep-case-number" class="mono">...</span></div>
+              <div><strong>Exhibit ID:</strong> <span id="rep-evidence-id" class="mono" style="color: var(--accent); font-weight: 700;">...</span></div>
+              <div><strong>Evidence Title:</strong> <span id="rep-title">...</span></div>
+              <div><strong>Evidence Type:</strong> <span id="rep-type">...</span></div>
+              <div><strong>Original File:</strong> <span id="rep-filename" class="mono">...</span></div>
+              <div><strong>File Size:</strong> <span id="rep-filesize">...</span></div>
+              <div><strong>Seized / Uploaded By:</strong> <span id="rep-uploaded-by">...</span></div>
+              <div><strong>Intake Date:</strong> <span id="rep-uploaded-at">...</span></div>
+            </div>
+          </div>
+
+          <!-- Section 2: Cryptographic Hash Verification -->
+          <div style="margin-bottom: 24px;">
+            <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">
+              2. Cryptographic Integrity Audit (FIPS 180-4 SHA-256)
+            </h3>
+            <div style="font-size: 13px; line-height: 1.8;">
+              <div><strong>Original Intake Hash:</strong></div>
+              <div class="mono" id="rep-orig-hash" style="background: #f4f6fb; padding: 6px 10px; border-radius: 4px; word-break: break-all; font-size: 12px; border: 1px solid var(--border-strong);">
+                ...
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+                <div><strong>Integrity Verification Result:</strong> <span id="rep-integrity-result" style="font-weight: 700; color: var(--success);">...</span></div>
+                <div><strong>Last Verified:</strong> <span id="rep-last-verified">...</span></div>
+                <div><strong>Forensic Verification Status:</strong> <span id="rep-forensic-status">...</span></div>
+                <div><strong>Court Review Status:</strong> <span id="rep-court-status" style="font-weight: 700; color: #f59e0b;">...</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Judicial Review Notes -->
+          <div style="margin-bottom: 24px;">
+            <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">
+              3. Judicial Review & Admissibility Observations
+            </h3>
+            <div id="rep-court-notes" style="font-size: 13px;">
+              Loading court observations...
+            </div>
+          </div>
+
+          <!-- Section 4: Chain of Custody Summary Table -->
+          <div style="margin-bottom: 28px;">
+            <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">
+              4. Chronological Chain of Custody Audit Trail
+            </h3>
+            <div class="table-responsive">
+              <table class="table" style="font-size: 12px;">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                    <th>Custodian</th>
+                    <th>Remarks</th>
+                  </tr>
+                </thead>
+                <tbody id="rep-timeline-tbody">
+                  <tr><td colspan="5">Loading custody summary...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Signature / Verification Block -->
+          <div style="border-top: 2px dashed var(--border-strong); padding-top: 20px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px;">
+            <div>
+              <p><strong>Report Generated:</strong> <span id="rep-generated-at">...</span></p>
+              <p><strong>Generated By:</strong> <span id="rep-generated-by">...</span></p>
+              <p><strong>Formal Review Officer:</strong> <span id="rep-reviewed-by">...</span> (<span id="rep-reviewed-at">...</span>)</p>
+            </div>
+            <div style="text-align: center; width: 220px;">
+              <div style="height: 48px; border-bottom: 1px solid var(--navy-900); margin-bottom: 6px;"></div>
+              <p><strong>Authorized Court Officer Signature</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/court-report.js"></script>
+</body>
+</html>

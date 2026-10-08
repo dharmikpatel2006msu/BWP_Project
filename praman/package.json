@@ -1,0 +1,35 @@
+{
+  "name": "praman",
+  "version": "1.0.0",
+  "description": "P.R.A.M.A.N - Portal for Recording and Managing Authentic Nodes (Digital Evidence Management & Chain of Custody Prototype)",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "seed": "node scripts/seed.js",
+    "test": "node scripts/test-api.js && node scripts/test-court-officer.js"
+  },
+  "keywords": [
+    "evidence-management",
+    "chain-of-custody",
+    "sha-256",
+    "forensics",
+    "praman"
+  ],
+  "author": "PRAMAN Development Team",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.5.2",
+    "multer": "^1.4.5-lts.1",
+    "xmlbuilder2": "^3.1.1"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^10.0.0",
+    "nodemon": "^3.1.4"
+  }
+}

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Court Evidence Review — P.R.A.M.AN</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="brand-badge" style="background: rgba(201, 130, 15, 0.16); color: #f59e0b;">Judicial Chamber</span>
+        <div class="sidebar-title">
+          <span>⚖️</span> P.R.A.M.A.N
+        </div>
+        <div class="sidebar-subtitle">Court Evidence Admissibility & Verification Node</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Judicial Proceedings</div>
+        <a href="court-dashboard.html" class="nav-item">
+          <span class="nav-icon">⚖️</span>
+          <span>Court Dashboard</span>
+        </a>
+        <a href="court-evidence.html" class="nav-item">
+          <span class="nav-icon">📜</span>
+          <span>Court Evidence</span>
+        </a>
+        <a href="court-review.html" class="nav-item active">
+          <span class="nav-icon">🔍</span>
+          <span>Court Review</span>
+        </a>
+        <a href="custody.html" class="nav-item">
+          <span class="nav-icon">⛓️</span>
+          <span>Chain of Custody</span>
+        </a>
+        <a href="court-report.html" class="nav-item">
+          <span class="nav-icon">🖨️</span>
+          <span>Court Reports</span>
+        </a>
+        <a href="court-activity.html" class="nav-item">
+          <span class="nav-icon">⚡</span>
+          <span>Court Activity</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" id="sidebar-user-avatar" style="border-color: #f59e0b; background: #1f2937;">CO</div>
+          <div class="user-info">
+            <div class="user-name" id="sidebar-user-name">Loading Officer...</div>
+            <span class="user-role-tag" id="sidebar-user-role" style="color: #f59e0b;">Court Officer</span>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-logout">
+          <span>🚪</span> Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <header class="top-bar">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <button id="mobile-toggle" class="mobile-nav-toggle">☰</button>
+          <div class="page-title-group">
+            <h1>Evidentiary Admissibility & Judicial Review</h1>
+            <p>Verification against reference SHA-256 digest, custody audit review, and court acceptance</p>
+          </div>
+        </div>
+        <div class="top-bar-actions">
+          <a href="court-evidence.html" class="btn btn-secondary btn-sm">← Court Exhibits</a>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Exhibit Selector -->
+        <div class="card" style="padding: 16px 24px;">
+          <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <label class="form-label" style="margin-bottom: 0; min-width: 150px;" for="select-court-evidence">
+              Select Court Exhibit:
+            </label>
+            <div style="flex: 1; min-width: 280px;">
+              <select id="select-court-evidence" class="form-control">
+                <option value="">Loading submitted exhibits...</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification Results Box -->
+        <div id="court-verification-box" style="display: none; margin-bottom: 20px;"></div>
+
+        <!-- Clarification Banner -->
+        <div id="clarification-alert-box" class="alert alert-danger" style="display: none; margin-bottom: 20px;"></div>
+
+        <div id="court-dossier-content" style="display: none;">
+          <!-- Evidence Header Card -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                  <span class="mono" id="ev-id" style="font-size: 18px; font-weight: 800; color: var(--accent);">EV-XXXX-XXXX</span>
+                  <span id="ev-integrity-badge" class="badge badge-warning">NOT CHECKED</span>
+                  <span id="ev-court-status-badge" class="badge badge-info">Under Review</span>
+                </div>
+                <h2 id="ev-title" style="font-size: 22px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px;">...</h2>
+                <p style="font-size: 13px; color: var(--text-secondary);">Case Number: <strong id="ev-case" class="mono" style="color: var(--text-primary);">...</strong></p>
+              </div>
+
+              <!-- Judicial Action Toolbar -->
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button id="btn-court-verify" class="btn btn-primary">
+                  <span>🛡️</span> Verify Integrity
+                </button>
+                <button id="btn-open-accept" class="btn btn-success">
+                  <span>✅</span> Accept for Court Record
+                </button>
+                <button id="btn-open-clarification" class="btn btn-danger">
+                  <span>❓</span> Request Clarification
+                </button>
+                <button id="btn-open-court-note" class="btn btn-secondary">
+                  <span>📝</span> Add Court Note
+                </button>
+                <a id="btn-court-custody" href="custody.html" class="btn btn-secondary">
+                  <span>⛓️</span> View Custody
+                </a>
+                <a id="btn-court-report" href="court-report.html" class="btn btn-secondary">
+                  <span>🖨️</span> Report View
+                </a>
+              </div>
+            </div>
+
+            <!-- Monospace Reference Hash Block -->
+            <div style="margin-top: 22px;">
+              <label class="form-label">Reference Cryptographic Digest (FIPS 180-4 SHA-256)</label>
+              <div class="hash-block">
+                <span class="hash-text" id="ev-original-hash">...</span>
+                <button id="btn-copy-orig-hash" class="btn-copy">Copy</button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin-top: 4px;">
+                * Immutable reference hash recorded at initial intake. Never altered during judicial examination.
+              </p>
+            </div>
+          </div>
+
+          <!-- Split Grid: Metadata & Separated Notes -->
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+            <!-- Left: Metadata -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <span>📋</span> Evidentiary Provenance & Custody State
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                <div>
+                  <span class="form-label" style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">Evidence Type</span>
+                  <p id="ev-type" style="font-weight: 600;">...</p>
+                </div>
+                <div>
+                  <span class="form-label" style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">Original File</span>
+                  <p id="ev-filename" class="mono" style="font-size: 13px; font-weight: 600;">...</p>
+                </div>
+                <div>
+                  <span class="form-label" style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">File Size</span>
+                  <p id="ev-filesize" style="font-weight: 600;">...</p>
+                </div>
+                <div>
+                  <span class="form-label" style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">Seized / Ingested By</span>
+                  <p id="ev-uploader" style="font-weight: 600;">...</p>
+                </div>
+                <div>
+                  <span class="form-label" style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">Ingestion Date</span>
+                  <p id="ev-uploaded-at" style="font-weight: 600; font-size: 13px;">...</p>
+                </div>
+                <div>
+                  <span class="form-label" style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">Current Custodian</span>
+                  <p id="ev-holder" style="font-weight: 700; color: var(--accent-strong);">...</p>
+                </div>
+                <div>
+                  <span class="form-label" style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">Last Verified</span>
+                  <p id="ev-verified-at" style="font-weight: 600; font-size: 13px;">...</p>
+                </div>
+              </div>
+
+              <div style="border-top: 1px solid var(--border); padding-top: 16px;">
+                <span class="form-label" style="font-size: 12px; text-transform: uppercase; color: var(--text-secondary);">Description & Intake Context</span>
+                <p id="ev-desc" style="font-size: 13.5px; color: var(--text-primary); line-height: 1.6; background: var(--surface); padding: 12px; border-radius: var(--radius-sm);">
+                  ...
+                </p>
+              </div>
+            </div>
+
+            <!-- Right: Separated Notes -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <span>📝</span> Evidentiary Notes & Observations
+                </div>
+              </div>
+              <div id="court-notes-container">
+                <p style="color: var(--text-secondary); font-size: 13px;">Loading observations...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal 1: Accept for Court Record -->
+  <div class="modal-backdrop" id="modal-court-accept">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Accept Evidence for Official Court Record</h3>
+        <span class="modal-close" id="btn-close-accept">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+          Confirming acceptance admits this digital exhibit into the formal judicial court record. The original file and cryptographic hash remain strictly immutable.
+        </p>
+
+        <div style="background: var(--surface); padding: 14px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 16px;">
+          <div><strong>Exhibit ID:</strong> <span class="mono" id="accept-info-id"></span></div>
+          <div><strong>Case Number:</strong> <span class="mono" id="accept-info-case"></span></div>
+          <div><strong>Integrity Status:</strong> <span id="accept-info-integrity"></span></div>
+          <div style="word-break: break-all; margin-top: 4px;"><strong>Reference SHA-256:</strong> <span class="mono" style="font-size: 11px;" id="accept-info-hash"></span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-accept">Cancel</button>
+        <button type="button" class="btn btn-success" id="btn-confirm-accept">Accept for Court Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Request Clarification -->
+  <div class="modal-backdrop" id="modal-court-clarification">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Request Evidentiary Clarification</h3>
+        <span class="modal-close" id="btn-close-clar">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;">
+          Specify the deficiency, missing transfer documentation, or verification concern requiring clarification from the investigating or forensic officer.
+        </p>
+        <div class="form-group">
+          <label class="form-label" for="clarification-reason">Clarification Reason <span class="required">*</span></label>
+          <textarea id="clarification-reason" class="form-control" rows="4" placeholder="e.g. Chain of custody contains an unrecorded handover between 14:00 and 16:30; forensic report certificate missing signature." required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-clar">Cancel</button>
+        <button type="button" class="btn btn-danger" id="btn-submit-clar">Submit Clarification Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Add Court Note -->
+  <div class="modal-backdrop" id="modal-court-note">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Record Judicial Observation Note</h3>
+        <span class="modal-close" id="btn-close-note">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="court-note-text">Judicial Note / Hearing Observation <span class="required">*</span></label>
+          <textarea id="court-note-text" class="form-control" rows="4" placeholder="e.g. Evidence integrity verified and chain of custody reviewed during preliminary hearing." required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-note">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btn-submit-court-note">Record Court Note</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/court-review.js"></script>
+</body>
+</html>

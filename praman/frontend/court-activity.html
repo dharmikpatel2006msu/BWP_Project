@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Court Activity Ledger — P.R.A.M.A.N</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="brand-badge" style="background: rgba(201, 130, 15, 0.16); color: #f59e0b;">Judicial Chamber</span>
+        <div class="sidebar-title">
+          <span>⚖️</span> P.R.A.M.A.N
+        </div>
+        <div class="sidebar-subtitle">Court Evidence Admissibility & Verification Node</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Judicial Proceedings</div>
+        <a href="court-dashboard.html" class="nav-item">
+          <span class="nav-icon">⚖️</span>
+          <span>Court Dashboard</span>
+        </a>
+        <a href="court-evidence.html" class="nav-item">
+          <span class="nav-icon">📜</span>
+          <span>Court Evidence</span>
+        </a>
+        <a href="court-review.html" class="nav-item">
+          <span class="nav-icon">🔍</span>
+          <span>Court Review</span>
+        </a>
+        <a href="custody.html" class="nav-item">
+          <span class="nav-icon">⛓️</span>
+          <span>Chain of Custody</span>
+        </a>
+        <a href="court-report.html" class="nav-item">
+          <span class="nav-icon">🖨️</span>
+          <span>Court Reports</span>
+        </a>
+        <a href="court-activity.html" class="nav-item active">
+          <span class="nav-icon">⚡</span>
+          <span>Court Activity</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" id="sidebar-user-avatar" style="border-color: #f59e0b; background: #1f2937;">CO</div>
+          <div class="user-info">
+            <div class="user-name" id="sidebar-user-name">Loading Officer...</div>
+            <span class="user-role-tag" id="sidebar-user-role" style="color: #f59e0b;">Court Officer</span>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-logout">
+          <span>🚪</span> Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <header class="top-bar">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <button id="mobile-toggle" class="mobile-nav-toggle">☰</button>
+          <div class="page-title-group">
+            <h1>Court Activity & Judicial Audit Trail</h1>
+            <p>Chronological security and review log for court-admitted evidence</p>
+          </div>
+        </div>
+        <div class="top-bar-actions">
+          <a href="court-dashboard.html" class="btn btn-secondary btn-sm">← Court Dashboard</a>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>⚡</span> Judicial Proceedings Audit Stream
+            </div>
+            <span style="font-size: 12px; color: var(--text-secondary);">Immutable evidentiary audit log</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Court Action Event</th>
+                  <th>Evidence ID</th>
+                  <th>Officer</th>
+                  <th>Activity Details</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody id="court-activity-tbody">
+                <tr>
+                  <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-secondary);">Loading judicial review activity ledger...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/court-activity.js"></script>
+</body>
+</html>

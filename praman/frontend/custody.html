@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chain of Custody — P.R.A.M.A.N</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="brand-badge">Forensic Integrity</span>
+        <div class="sidebar-title">
+          <span>🛡️</span> P.R.A.M.A.N
+        </div>
+        <div class="sidebar-subtitle">Portal for Recording and Managing Authentic Nodes</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Evidence Workspace</div>
+        <a href="dashboard.html" class="nav-item">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="evidence.html" class="nav-item">
+          <span class="nav-icon">📁</span>
+          <span>Evidence Vault</span>
+        </a>
+        <a href="upload.html" id="nav-upload" class="nav-item">
+          <span class="nav-icon">📤</span>
+          <span>Upload Evidence</span>
+        </a>
+        <a href="custody.html" class="nav-item active">
+          <span class="nav-icon">⛓️</span>
+          <span>Chain of Custody</span>
+        </a>
+
+        <div class="nav-section-title">Administration</div>
+        <a href="audit.html" id="nav-audit" class="nav-item">
+          <span class="nav-icon">📜</span>
+          <span>Audit Logs</span>
+        </a>
+        <a href="users.html" id="nav-users" class="nav-item">
+          <span class="nav-icon">👥</span>
+          <span>User Management</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" id="sidebar-user-avatar">AD</div>
+          <div class="user-info">
+            <div class="user-name" id="sidebar-user-name">Loading...</div>
+            <span class="user-role-tag" id="sidebar-user-role">...</span>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-logout">
+          <span>🚪</span> Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <header class="top-bar">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <button id="mobile-toggle" class="mobile-nav-toggle">☰</button>
+          <div class="page-title-group">
+            <h1>Cryptographic Chain of Custody</h1>
+            <p>Append-only audit trail tracking physical and digital evidence handling</p>
+          </div>
+        </div>
+        <div class="top-bar-actions">
+          <a href="evidence.html" class="btn btn-secondary btn-sm">Vault Catalog</a>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Evidence Selector Card -->
+        <div class="card" style="padding: 18px 24px;">
+          <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <label class="form-label" style="margin-bottom: 0; min-width: 140px;" for="select-evidence">
+              Inspect Evidence Item:
+            </label>
+            <div style="flex: 1; min-width: 260px;">
+              <select id="select-evidence" class="form-control">
+                <option value="">Loading evidence list...</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evidence Header -->
+        <div class="card" id="evidence-custody-header" style="background: var(--navy-900); color: var(--white); border-color: var(--navy-700);">
+          <p style="color: var(--text-inverse-muted); font-size: 13px;">Select an evidence record above to view its custodial timeline.</p>
+        </div>
+
+        <!-- Vertical Timeline Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>⛓️</span> Custodial Lifecycle Events
+            </div>
+            <span style="font-size: 12px; color: var(--text-secondary);">Append-only chronological sequence</span>
+          </div>
+
+          <div id="custody-timeline-container" style="padding: 8px 12px;">
+            <p style="color: var(--text-secondary); font-size: 13px;">Select an evidence record to inspect timeline.</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/custody.js"></script>
+</body>
+</html>
