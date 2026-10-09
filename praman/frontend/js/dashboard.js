@@ -1,9 +1,55 @@
 /**
- * P.R.A.M.A.N — Dashboard Logic
+ * P.R.A.M.A.N — Dynamic Role-Based Dashboard Logic
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth();
+
+  const user = getUser();
+  if (!user) return;
+
+  // Adapt Header and Top Bar Actions dynamically based on Role
+  const titleEl = document.querySelector('.page-title-group h1');
+  const subEl = document.querySelector('.page-title-group p');
+  const actionContainer = document.querySelector('.top-bar-actions');
+  const statLabel3 = document.querySelectorAll('.stat-label')[2];
+
+  if (user.role === 'admin') {
+    if (titleEl) titleEl.textContent = 'System Administration & Global Oversight';
+    if (subEl) subEl.textContent = 'System access control, user provisioning, global evidence registry, and audit compliance';
+    if (actionContainer) {
+      actionContainer.innerHTML = `
+        <a href="users.html" class="btn btn-primary btn-sm">
+          <span>👥</span> User Management
+        </a>
+        <a href="audit.html" class="btn btn-secondary btn-sm" style="margin-left: 8px;">
+          <span>📜</span> System Audit Logs
+        </a>
+      `;
+    }
+    if (statLabel3) statLabel3.textContent = 'Active Users';
+  } else if (user.role === 'forensic') {
+    if (titleEl) titleEl.textContent = 'Forensic Examination & Verification Lab';
+    if (subEl) subEl.textContent = 'Secure evidence examination, SHA-256 cryptographic verification, and technical analysis notes';
+    if (actionContainer) {
+      actionContainer.innerHTML = `
+        <a href="evidence.html" class="btn btn-primary btn-sm">
+          <span>📁</span> Open Evidence Vault
+        </a>
+      `;
+    }
+    if (statLabel3) statLabel3.textContent = 'Pending Forensic Check';
+  } else if (user.role === 'investigator') {
+    if (titleEl) titleEl.textContent = 'Investigator Evidence Ingestion Hub';
+    if (subEl) subEl.textContent = 'First-link chain of custody file ingestion and cryptographic SHA-256 baseline hashing';
+    if (actionContainer) {
+      actionContainer.innerHTML = `
+        <a href="upload.html" class="btn btn-primary btn-sm">
+          <span>+</span> Ingest Evidence
+        </a>
+      `;
+    }
+  }
 
   const totalEl = document.getElementById('stat-total');
   const verifiedEl = document.getElementById('stat-verified');
@@ -22,21 +68,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       verifiedEvidence,
       pendingEvidence,
       failedIntegrity,
+      totalUsers,
       evidenceByType,
       recentEvidence,
       recentActivity,
     } = res.data;
 
     // Set stat counters
-    if (totalEl) totalEl.textContent = totalEvidence;
-    if (verifiedEl) verifiedEl.textContent = verifiedEvidence;
-    if (pendingEl) pendingEl.textContent = pendingEvidence;
-    if (failedEl) failedEl.textContent = failedIntegrity;
+    if (totalEl) totalEl.textContent = totalEvidence || 0;
+    if (verifiedEl) verifiedEl.textContent = verifiedEvidence || 0;
+    if (pendingEl) {
+      pendingEl.textContent = user.role === 'admin' ? (totalUsers || 0) : (pendingEvidence || 0);
+    }
+    if (failedEl) failedEl.textContent = failedIntegrity || 0;
 
     // Render Recent Evidence Table
     if (recentTableBody) {
-      if (recentEvidence.length === 0) {
-        recentTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 24px; color: var(--text-secondary);">No evidence records found. Click "Upload Evidence" to ingest records.</td></tr>`;
+      if (!recentEvidence || recentEvidence.length === 0) {
+        const uploadHint = (user.role === 'admin' || user.role === 'investigator') ? 'Click "+ Ingest Evidence" to add records.' : 'Waiting for evidence ingestion.';
+        recentTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 24px; color: var(--text-secondary);">No evidence records found. ${uploadHint}</td></tr>`;
       } else {
         recentTableBody.innerHTML = recentEvidence
           .map((ev) => {
@@ -70,12 +120,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         typeDistributionEl.innerHTML = '<span style="color: var(--text-secondary); font-size: 13px;">No evidence categories registered yet.</span>';
       } else {
         typeDistributionEl.innerHTML = types
-          .map((t) => `
+          .map(
+            (t) => `
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--surface); border-radius: var(--radius-sm); margin-bottom: 6px;">
               <span style="font-size: 13px; font-weight: 600;">${t}</span>
               <span class="badge badge-info">${evidenceByType[t]} items</span>
             </div>
-          `)
+          `
+          )
           .join('');
       }
     }
@@ -86,7 +138,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         recentActivityList.innerHTML = '<li style="color: var(--text-secondary); font-size: 13px; padding: 12px;">No activity logs recorded.</li>';
       } else {
         recentActivityList.innerHTML = recentActivity
-          .map((act) => `
+          .map(
+            (act) => `
             <li style="display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border);">
               <span class="mono" style="font-size: 11px; color: var(--accent); white-space: nowrap;">${formatDate(act.timestamp)}</span>
               <div style="flex: 1; font-size: 13px;">
@@ -94,7 +147,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <p style="color: var(--text-secondary); font-size: 12px; margin-top: 2px;">${escapeHtml(act.details || '')}</p>
               </div>
             </li>
-          `)
+          `
+          )
           .join('');
       }
     }

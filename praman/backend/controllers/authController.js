@@ -1,12 +1,14 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const { supabase } = require('../config/db');
 const { logAudit } = require('../utils/auditLogger');
 
 // Helper to sign JWT
 const generateToken = (user) => {
   return jwt.sign(
     {
-      id: user._id,
+      id: user.id || user._id,
       name: user.name,
       email: user.email,
       role: user.role,
@@ -30,11 +32,18 @@ const login = async (req, res, next) => {
       });
     }
 
-    // Explicitly query password since it is marked select: false
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
+    const normalizedEmail = email.toLowerCase().trim();
 
-    // Generic error to prevent email enumeration
-    if (!user || !(await user.comparePassword(password))) {
+    // Query user by email from Supabase
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', normalizedEmail)
+      .single();
+
+    const isMatch = user ? await bcrypt.compare(password, user.password) : false;
+
+    if (error || !user || !isMatch) {
       await logAudit({
         req,
         action: 'LOGIN_FAILED',
@@ -59,7 +68,7 @@ const login = async (req, res, next) => {
     await logAudit({
       req,
       action: 'LOGIN_SUCCESS',
-      userId: user._id,
+      userId: user.id,
       details: `User ${user.email} logged in successfully`,
     });
 
@@ -69,7 +78,8 @@ const login = async (req, res, next) => {
       data: {
         token,
         user: {
-          id: user._id,
+          id: user.id,
+          _id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
@@ -95,7 +105,15 @@ const register = async (req, res, next) => {
       });
     }
 
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if email exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -103,20 +121,35 @@ const register = async (req, res, next) => {
       });
     }
 
-    const user = await User.create({
-      name,
-      email: email.toLowerCase().trim(),
-      password,
-      role: role || 'investigator',
-    });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const userId = crypto.randomUUID();
 
-    const token = generateToken(user);
+    const { data: newUser, error } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        name: name.trim(),
+        email: normalizedEmail,
+        password: hashedPassword,
+        role: role || 'investigator',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      })
+      .select('id, name, email, role, isActive')
+      .single();
+
+    if (error || !newUser) {
+      throw new Error(error ? error.message : 'Failed to register user');
+    }
+
+    const token = generateToken(newUser);
 
     await logAudit({
       req,
       action: 'USER_CREATED',
-      userId: user._id,
-      details: `New user self-registered: ${user.email} (${user.role})`,
+      userId: newUser.id,
+      details: `New user self-registered: ${newUser.email} (${newUser.role})`,
     });
 
     res.status(201).json({
@@ -125,10 +158,11 @@ const register = async (req, res, next) => {
       data: {
         token,
         user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
+          id: newUser.id,
+          _id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
         },
       },
     });
@@ -160,7 +194,7 @@ const logout = async (req, res, next) => {
       await logAudit({
         req,
         action: 'LOGOUT',
-        userId: req.user._id,
+        userId: req.user.id || req.user._id,
         details: `User ${req.user.email} logged out`,
       });
     }

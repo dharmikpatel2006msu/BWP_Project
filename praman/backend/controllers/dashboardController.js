@@ -1,6 +1,5 @@
-const Evidence = require('../models/Evidence');
-const User = require('../models/User');
-const AuditLog = require('../models/AuditLog');
+const { supabase } = require('../config/db');
+const { populateUsers, populateEvidence } = require('../utils/populateHelper');
 
 // @desc    Get dashboard metrics, statistics, and recent activity
 // @route   GET /api/dashboard/stats
@@ -8,48 +7,45 @@ const AuditLog = require('../models/AuditLog');
 const getDashboardStats = async (req, res, next) => {
   try {
     const [
-      totalEvidence,
-      verifiedEvidence,
-      pendingEvidence,
-      failedIntegrity,
-      totalUsers,
-      recentEvidence,
-      recentActivity,
-      typeAggregations,
+      { count: totalEvidence },
+      { count: verifiedEvidence },
+      { count: pendingEvidence },
+      { count: failedIntegrity },
+      { count: totalUsers },
+      { data: rawRecentEvidence },
+      { data: rawRecentActivity },
+      { data: typeData },
     ] = await Promise.all([
-      Evidence.countDocuments(),
-      Evidence.countDocuments({ integrityStatus: 'Verified' }),
-      Evidence.countDocuments({ integrityStatus: 'Not Checked' }),
-      Evidence.countDocuments({ integrityStatus: 'Failed' }),
-      User.countDocuments({ isActive: true }),
-      Evidence.find()
-        .populate('uploadedBy', 'name email role')
-        .populate('currentHolder', 'name email role')
-        .sort({ createdAt: -1 })
-        .limit(6),
-      AuditLog.find()
-        .populate('user', 'name email role')
-        .populate('evidence', 'evidenceId caseNumber')
-        .sort({ timestamp: -1 })
-        .limit(6),
-      Evidence.aggregate([
-        { $group: { _id: '$evidenceType', count: { $sum: 1 } } },
-      ]),
+      supabase.from('evidence').select('*', { count: 'exact', head: true }),
+      supabase.from('evidence').select('*', { count: 'exact', head: true }).eq('integrityStatus', 'Verified'),
+      supabase.from('evidence').select('*', { count: 'exact', head: true }).eq('integrityStatus', 'Not Checked'),
+      supabase.from('evidence').select('*', { count: 'exact', head: true }).eq('integrityStatus', 'Failed'),
+      supabase.from('users').select('*', { count: 'exact', head: true }).eq('isActive', true),
+      supabase.from('evidence').select('*').order('createdAt', { ascending: false }).limit(6),
+      supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(6),
+      supabase.from('evidence').select('evidenceType'),
     ]);
 
+    const recentEvidence = await populateUsers(rawRecentEvidence || [], ['uploadedBy', 'currentHolder']);
+    let recentActivity = await populateUsers(rawRecentActivity || [], ['user']);
+    recentActivity = await populateEvidence(recentActivity);
+
     const evidenceByType = {};
-    typeAggregations.forEach((item) => {
-      evidenceByType[item._id] = item.count;
-    });
+    if (typeData) {
+      typeData.forEach((item) => {
+        const type = item.evidenceType || 'Other';
+        evidenceByType[type] = (evidenceByType[type] || 0) + 1;
+      });
+    }
 
     res.status(200).json({
       success: true,
       data: {
-        totalEvidence,
-        verifiedEvidence,
-        pendingEvidence,
-        failedIntegrity,
-        totalUsers,
+        totalEvidence: totalEvidence || 0,
+        verifiedEvidence: verifiedEvidence || 0,
+        pendingEvidence: pendingEvidence || 0,
+        failedIntegrity: failedIntegrity || 0,
+        totalUsers: totalUsers || 0,
         evidenceByType,
         recentEvidence,
         recentActivity,

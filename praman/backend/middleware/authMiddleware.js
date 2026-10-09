@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { supabase } = require('../config/db');
 
 const protect = async (req, res, next) => {
   let token;
@@ -21,9 +21,13 @@ const protect = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'praman_super_secret_jwt_key_2026_forensics');
 
-    const user = await User.findById(decoded.id).select('-password');
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, name, email, role, isActive')
+      .eq('id', decoded.id)
+      .single();
 
-    if (!user) {
+    if (error || !user) {
       return res.status(401).json({
         success: false,
         message: 'Invalid session: User no longer exists.',
@@ -37,7 +41,10 @@ const protect = async (req, res, next) => {
       });
     }
 
-    req.user = user;
+    req.user = {
+      ...user,
+      _id: user.id,
+    };
     next();
   } catch (err) {
     return res.status(401).json({

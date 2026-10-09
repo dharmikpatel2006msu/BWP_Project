@@ -1,45 +1,30 @@
-const mongoose = require('mongoose');
+const path = require('path');
+const dotenv = require('dotenv');
 
-let mongodInstance = null;
+// Ensure environment variables are loaded regardless of import location
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config();
+
+const { createClient } = require('@supabase/supabase-js');
+
+let supabaseUrl = process.env.SUPABASE_URL || 'https://your-supabase-project.supabase.co';
+if (!supabaseUrl.startsWith('http://') && !supabaseUrl.startsWith('https://')) {
+  supabaseUrl = 'https://your-supabase-project.supabase.co';
+}
+const supabaseKey = process.env.SUPABASE_ANON_KEY || 'your_supabase_anon_key';
+
+// Initialize Supabase Client
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const connectDB = async () => {
-  const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/praman_db';
-
-  try {
-    // Attempt standard connection first with 3 second serverSelectionTimeout
-    const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 3000,
-    });
-    console.log(`[PRAMAN] MongoDB Connected: ${conn.connection.host}`);
-    return conn;
-  } catch (err) {
-    console.warn(`[PRAMAN] Could not connect to local MongoDB at ${uri}: ${err.message}`);
-    
-    // In development/demo, fall back to MongoMemoryServer if available
-    try {
-      console.log('[PRAMAN] Attempting to start in-memory MongoDB fallback...');
-      const { MongoMemoryServer } = require('mongodb-memory-server');
-      mongodInstance = await MongoMemoryServer.create();
-      const memUri = mongodInstance.getUri();
-      
-      const conn = await mongoose.connect(memUri);
-      console.log(`[PRAMAN] Connected to In-Memory MongoDB at: ${memUri}`);
-      console.log('[PRAMAN] Running in standalone demo mode with temporary in-memory database.');
-      return conn;
-    } catch (memErr) {
-      console.error('[PRAMAN] MongoDB connection failed completely:');
-      console.error(err.message);
-      console.error('Please ensure MongoDB is running or install mongodb-memory-server.');
-      throw err;
-    }
-  }
+  console.log(`[PRAMAN] Initialized Supabase PostgreSQL Client (${supabaseUrl})`);
+  return supabase;
 };
 
 const disconnectDB = async () => {
-  await mongoose.disconnect();
-  if (mongodInstance) {
-    await mongodInstance.stop();
-  }
+  // Supabase client uses stateless HTTP REST queries
+  return true;
 };
 
-module.exports = { connectDB, disconnectDB };
+module.exports = { supabase, connectDB, disconnectDB };

@@ -8,6 +8,12 @@ const limit = 10;
 document.addEventListener('DOMContentLoaded', () => {
   requireAuth();
 
+  const user = getUser();
+  const topActionBtn = document.querySelector('.top-bar-actions a');
+  if (topActionBtn && user && user.role === 'forensic') {
+    topActionBtn.style.display = 'none';
+  }
+
   const searchInput = document.getElementById('search-input');
   const statusFilter = document.getElementById('filter-status');
   const typeFilter = document.getElementById('filter-type');
@@ -99,8 +105,6 @@ async function loadEvidence() {
       return;
     }
 
-    const currentUser = getUser();
-
     tbody.innerHTML = list
       .map((ev) => {
         const integrityBadge =
@@ -148,7 +152,7 @@ async function quickVerify(evidenceId, btnElement) {
 
   try {
     const res = await api.post(`/evidence/${evidenceId}/verify`, {});
-    const { isMatch, integrityStatus, currentHash } = res.data;
+    const { isMatch } = res.data;
 
     const cell = document.getElementById(`integrity-cell-${evidenceId}`);
     if (cell) {

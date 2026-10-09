@@ -1,15 +1,17 @@
-const mongoose = require('mongoose');
-const CustodyLog = require('../models/CustodyLog');
-const Evidence = require('../models/Evidence');
-const User = require('../models/User');
+const crypto = require('crypto');
+const { supabase } = require('../config/db');
 const { logAudit } = require('../utils/auditLogger');
+const { formatRecord, populateUsers } = require('../utils/populateHelper');
 
-// Helper to find evidence by _id or evidenceId
+// Helper to find evidence by id or evidenceId
 const findEvidence = async (idParam) => {
-  if (mongoose.Types.ObjectId.isValid(idParam)) {
-    return await Evidence.findById(idParam);
-  }
-  return await Evidence.findOne({ evidenceId: idParam });
+  const { data } = await supabase
+    .from('evidence')
+    .select('*')
+    .or(`id.eq.${idParam},evidenceId.eq.${idParam}`)
+    .maybeSingle();
+
+  return data ? formatRecord(data) : null;
 };
 
 // @desc    Get complete chain of custody timeline for an evidence item
@@ -26,18 +28,24 @@ const getCustodyLogsByEvidence = async (req, res, next) => {
       });
     }
 
-    // Chronological order (oldest to newest) to show complete chain progression
-    const logs = await CustodyLog.find({ evidence: evidence._id })
-      .populate('fromUser', 'name email role')
-      .populate('toUser', 'name email role')
-      .populate('performedBy', 'name email role')
-      .sort({ timestamp: 1 });
+    const { data: logs, error } = await supabase
+      .from('custody_logs')
+      .select('*')
+      .eq('evidence', evidence.id)
+      .order('timestamp', { ascending: true });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const populatedLogs = await populateUsers(logs || [], ['fromUser', 'toUser', 'performedBy']);
 
     res.status(200).json({
       success: true,
       data: {
         evidence: {
-          _id: evidence._id,
+          _id: evidence.id,
+          id: evidence.id,
           evidenceId: evidence.evidenceId,
           title: evidence.title,
           caseNumber: evidence.caseNumber,
@@ -45,7 +53,7 @@ const getCustodyLogsByEvidence = async (req, res, next) => {
           status: evidence.status,
           integrityStatus: evidence.integrityStatus,
         },
-        timeline: logs,
+        timeline: populatedLogs,
       },
     });
   } catch (err) {
@@ -75,9 +83,12 @@ const transferEvidence = async (req, res, next) => {
       });
     }
 
+    const currentUserId = req.user.id || req.user._id;
+
     // Role check: Only admin, currentHolder, or investigator holding it can transfer
-    const isCurrentHolder = evidence.currentHolder.toString() === req.user._id.toString();
+    const isCurrentHolder = String(evidence.currentHolder) === String(currentUserId);
     const isAdmin = req.user.role === 'admin';
+
     if (!isCurrentHolder && !isAdmin) {
       return res.status(403).json({
         success: false,
@@ -86,7 +97,12 @@ const transferEvidence = async (req, res, next) => {
     }
 
     // Verify recipient user
-    const recipientUser = await User.findById(toUserId);
+    const { data: recipientUser } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', toUserId)
+      .maybeSingle();
+
     if (!recipientUser || !recipientUser.isActive) {
       return res.status(400).json({
         success: false,
@@ -94,7 +110,7 @@ const transferEvidence = async (req, res, next) => {
       });
     }
 
-    if (recipientUser._id.toString() === evidence.currentHolder.toString()) {
+    if (String(recipientUser.id) === String(evidence.currentHolder)) {
       return res.status(400).json({
         success: false,
         message: 'Evidence is already in custody of this user.',
@@ -102,36 +118,46 @@ const transferEvidence = async (req, res, next) => {
     }
 
     const previousHolderId = evidence.currentHolder;
+    const newStatus = evidence.status === 'Uploaded' ? 'Assigned' : evidence.status;
+    const now = new Date().toISOString();
 
     // Update evidence current holder and status
-    evidence.currentHolder = recipientUser._id;
-    if (evidence.status === 'Uploaded') {
-      evidence.status = 'Assigned';
-    }
-    await evidence.save();
+    const { data: updatedEvidence } = await supabase
+      .from('evidence')
+      .update({
+        currentHolder: recipientUser.id,
+        status: newStatus,
+        updatedAt: now,
+      })
+      .eq('id', evidence.id)
+      .select('*')
+      .single();
+
+    const custodyEntryId = crypto.randomUUID();
 
     // Create append-only chain of custody entry
-    const custodyEntry = await CustodyLog.create({
-      evidence: evidence._id,
-      action: 'TRANSFERRED',
-      fromUser: previousHolderId,
-      toUser: recipientUser._id,
-      performedBy: req.user._id,
-      remarks: remarks ? remarks.trim() : `Transferred to ${recipientUser.name} (${recipientUser.role})`,
-      timestamp: new Date(),
-    });
+    const { data: custodyEntry } = await supabase
+      .from('custody_logs')
+      .insert({
+        id: custodyEntryId,
+        evidence: evidence.id,
+        action: 'TRANSFERRED',
+        fromUser: previousHolderId,
+        toUser: recipientUser.id,
+        performedBy: currentUserId,
+        remarks: remarks ? remarks.trim() : `Transferred to ${recipientUser.name} (${recipientUser.role})`,
+        timestamp: now,
+      })
+      .select('*')
+      .single();
 
-    // Populate log entry
-    const populatedLog = await CustodyLog.findById(custodyEntry._id)
-      .populate('fromUser', 'name email role')
-      .populate('toUser', 'name email role')
-      .populate('performedBy', 'name email role');
+    const populatedLog = await populateUsers(custodyEntry, ['fromUser', 'toUser', 'performedBy']);
 
     // Create Audit Log
     await logAudit({
       req,
       action: 'EVIDENCE_TRANSFERRED',
-      evidenceId: evidence._id,
+      evidenceId: evidence.id,
       details: `Custody of ${evidence.evidenceId} transferred from user to ${recipientUser.name} (${recipientUser.role})`,
     });
 
@@ -139,7 +165,7 @@ const transferEvidence = async (req, res, next) => {
       success: true,
       message: `Evidence custody successfully transferred to ${recipientUser.name}.`,
       data: {
-        evidence,
+        evidence: formatRecord(updatedEvidence || evidence),
         custodyRecord: populatedLog,
       },
     });

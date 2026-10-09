@@ -1,4 +1,6 @@
-const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const { supabase } = require('../config/db');
 const { logAudit } = require('../utils/auditLogger');
 
 // @desc    Get all users (with optional role or status filter)
@@ -7,17 +9,31 @@ const { logAudit } = require('../utils/auditLogger');
 const getAllUsers = async (req, res, next) => {
   try {
     const { role, active } = req.query;
-    const query = {};
 
-    if (role) query.role = role;
-    if (active !== undefined) query.isActive = active === 'true';
+    let query = supabase.from('users').select('id, name, email, role, isActive, createdAt').order('createdAt', { ascending: false });
 
-    const users = await User.find(query).select('-password').sort({ createdAt: -1 });
+    if (role) {
+      query = query.eq('role', role);
+    }
+    if (active !== undefined) {
+      query = query.eq('isActive', active === 'true');
+    }
+
+    const { data: users, error } = await query;
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const formattedUsers = (users || []).map((u) => ({
+      ...u,
+      _id: u.id,
+    }));
 
     res.status(200).json({
       success: true,
-      count: users.length,
-      data: users,
+      count: formattedUsers.length,
+      data: formattedUsers,
     });
   } catch (err) {
     next(err);
@@ -39,7 +55,13 @@ const createUser = async (req, res, next) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const existing = await User.findOne({ email: normalizedEmail });
+
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+
     if (existing) {
       return res.status(400).json({
         success: false,
@@ -47,13 +69,27 @@ const createUser = async (req, res, next) => {
       });
     }
 
-    const newUser = await User.create({
-      name: name.trim(),
-      email: normalizedEmail,
-      password,
-      role,
-      isActive: true,
-    });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const userId = crypto.randomUUID();
+
+    const { data: newUser, error } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        name: name.trim(),
+        email: normalizedEmail,
+        password: hashedPassword,
+        role,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      })
+      .select('id, name, email, role, isActive, createdAt')
+      .single();
+
+    if (error || !newUser) {
+      throw new Error(error ? error.message : 'Failed to create user');
+    }
 
     await logAudit({
       req,
@@ -61,8 +97,10 @@ const createUser = async (req, res, next) => {
       details: `New ${role} account created: ${newUser.email} by Admin (${req.user.email})`,
     });
 
-    const userObj = newUser.toObject();
-    delete userObj.password;
+    const userObj = {
+      ...newUser,
+      _id: newUser.id,
+    };
 
     res.status(201).json({
       success: true,
@@ -79,9 +117,15 @@ const createUser = async (req, res, next) => {
 // @access  Private (Admin)
 const toggleUserStatus = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
+    const userId = req.params.id;
 
-    if (!user) {
+    const { data: user, error: fetchErr } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (fetchErr || !user) {
       return res.status(404).json({
         success: false,
         message: 'User not found.',
@@ -89,33 +133,44 @@ const toggleUserStatus = async (req, res, next) => {
     }
 
     // Prevent admin from deactivating their own account
-    if (user._id.toString() === req.user._id.toString()) {
+    const currentAdminId = req.user.id || req.user._id;
+    if (String(user.id) === String(currentAdminId)) {
       return res.status(400).json({
         success: false,
         message: 'You cannot deactivate your own administrative account.',
       });
     }
 
-    // Toggle isActive
-    user.isActive = !user.isActive;
-    await user.save();
+    const updatedIsActive = !user.isActive;
 
-    const action = user.isActive ? 'USER_ACTIVATED' : 'USER_DEACTIVATED';
+    const { data: updatedUser, error: updateErr } = await supabase
+      .from('users')
+      .update({ isActive: updatedIsActive })
+      .eq('id', userId)
+      .select('id, name, email, role, isActive')
+      .single();
+
+    if (updateErr) {
+      throw new Error(updateErr.message);
+    }
+
+    const action = updatedIsActive ? 'USER_ACTIVATED' : 'USER_DEACTIVATED';
     await logAudit({
       req,
       action,
-      details: `Account for ${user.email} was ${user.isActive ? 'activated' : 'deactivated'} by ${req.user.email}`,
+      details: `Account for ${user.email} was ${updatedIsActive ? 'activated' : 'deactivated'} by ${req.user.email}`,
     });
 
     res.status(200).json({
       success: true,
-      message: `User ${user.email} is now ${user.isActive ? 'active' : 'deactivated'}.`,
+      message: `User ${user.email} is now ${updatedIsActive ? 'active' : 'deactivated'}.`,
       data: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isActive: user.isActive,
+        id: updatedUser.id,
+        _id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        isActive: updatedUser.isActive,
       },
     });
   } catch (err) {

@@ -1,18 +1,21 @@
 const path = require('path');
 const fs = require('fs');
-const mongoose = require('mongoose');
-const Evidence = require('../models/Evidence');
-const CustodyLog = require('../models/CustodyLog');
+const crypto = require('crypto');
+const { supabase } = require('../config/db');
 const { calculateFileHash } = require('../utils/hashFile');
 const { generateEvidenceId } = require('../utils/generateEvidenceId');
 const { logAudit } = require('../utils/auditLogger');
+const { formatRecord, populateUsers } = require('../utils/populateHelper');
 
-// Helper to find evidence by _id or evidenceId
+// Helper to find evidence by id or evidenceId
 const findEvidenceByIdOrCode = async (idParam) => {
-  if (mongoose.Types.ObjectId.isValid(idParam)) {
-    return await Evidence.findById(idParam);
-  }
-  return await Evidence.findOne({ evidenceId: idParam });
+  const { data } = await supabase
+    .from('evidence')
+    .select('*')
+    .or(`id.eq.${idParam},evidenceId.eq.${idParam}`)
+    .maybeSingle();
+
+  return data ? formatRecord(data) : null;
 };
 
 // @desc    Upload new digital evidence
@@ -30,7 +33,6 @@ const uploadEvidence = async (req, res, next) => {
     }
 
     if (!title || !caseNumber) {
-      // Clean up uploaded file if validation fails
       if (fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }
@@ -40,67 +42,79 @@ const uploadEvidence = async (req, res, next) => {
       });
     }
 
-    // Step 1: Calculate SHA-256 hash using streaming
     const sha256Hash = await calculateFileHash(req.file.path);
-
-    // Step 2: Generate unique human-readable Evidence ID (EV-YYYY-XXXX)
     const evidenceId = await generateEvidenceId();
+    const currentUserId = req.user.id || req.user._id;
 
-    // Step 3: Create initial notes array if provided
     const initialNotes = [];
     if (notes && notes.trim()) {
       initialNotes.push({
         text: notes.trim(),
-        addedBy: req.user._id,
+        addedBy: currentUserId,
         addedByName: req.user.name,
-        addedAt: new Date(),
+        addedAt: new Date().toISOString(),
       });
     }
 
-    // Step 4: Create Evidence record
-    const evidence = await Evidence.create({
-      evidenceId,
-      caseNumber: caseNumber.trim(),
-      title: title.trim(),
-      description: description ? description.trim() : '',
-      evidenceType: evidenceType || 'Document',
-      originalFilename: req.file.originalname,
-      storedFilename: req.file.filename,
-      filePath: req.file.path,
-      mimeType: req.file.mimetype,
-      fileSize: req.file.size,
-      sha256Hash,
-      uploadedBy: req.user._id,
-      uploadedAt: new Date(),
-      currentHolder: req.user._id,
-      status: 'Uploaded',
-      notes: initialNotes,
-      integrityStatus: 'Not Checked',
-    });
+    const newEvidenceId = crypto.randomUUID();
+    const now = new Date().toISOString();
 
-    // Step 5: Append to Chain of Custody (Initial upload record)
-    await CustodyLog.create({
-      evidence: evidence._id,
+    const { data: evidence, error } = await supabase
+      .from('evidence')
+      .insert({
+        id: newEvidenceId,
+        evidenceId,
+        caseNumber: caseNumber.trim(),
+        title: title.trim(),
+        description: description ? description.trim() : '',
+        evidenceType: evidenceType || 'Document',
+        originalFilename: req.file.originalname,
+        storedFilename: req.file.filename,
+        filePath: req.file.path,
+        mimeType: req.file.mimetype,
+        fileSize: req.file.size,
+        sha256Hash,
+        uploadedBy: currentUserId,
+        uploadedAt: now,
+        currentHolder: currentUserId,
+        status: 'Uploaded',
+        notes: initialNotes,
+        integrityStatus: 'Not Checked',
+        courtReviewStatus: 'None',
+        courtClarificationReason: '',
+        createdAt: now,
+        updatedAt: now,
+      })
+      .select('*')
+      .single();
+
+    if (error || !evidence) {
+      throw new Error(error ? error.message : 'Failed to insert evidence record');
+    }
+
+    const formattedEvidence = formatRecord(evidence);
+
+    // Append to Chain of Custody
+    await supabase.from('custody_logs').insert({
+      id: crypto.randomUUID(),
+      evidence: formattedEvidence.id,
       action: 'UPLOADED',
       fromUser: null,
-      toUser: req.user._id,
-      performedBy: req.user._id,
+      toUser: currentUserId,
+      performedBy: currentUserId,
       remarks: `Initial evidence ingestion. Generated SHA-256: ${sha256Hash}`,
-      timestamp: new Date(),
+      timestamp: now,
     });
 
-    // Step 6: Create Audit Log
+    // Create Audit Log
     await logAudit({
       req,
       action: 'EVIDENCE_UPLOADED',
-      evidenceId: evidence._id,
-      details: `Evidence ${evidence.evidenceId} uploaded by ${req.user.name} (${req.user.role}) for Case #${evidence.caseNumber}`,
+      evidenceId: formattedEvidence.id,
+      details: `Evidence ${formattedEvidence.evidenceId} uploaded by ${req.user.name} (${req.user.role}) for Case #${formattedEvidence.caseNumber}`,
     });
 
-    // Populate user details before returning
-    const populated = await Evidence.findById(evidence._id)
-      .populate('uploadedBy', 'name email role')
-      .populate('currentHolder', 'name email role');
+    const populated = await populateUsers(formattedEvidence);
 
     res.status(201).json({
       success: true,
@@ -108,7 +122,6 @@ const uploadEvidence = async (req, res, next) => {
       data: populated,
     });
   } catch (err) {
-    // Clean up uploaded file if an error occurs
     if (req.file && fs.existsSync(req.file.path)) {
       try {
         fs.unlinkSync(req.file.path);
@@ -127,53 +140,44 @@ const getEvidenceList = async (req, res, next) => {
   try {
     const { search, status, type, caseNumber, page = 1, limit = 10 } = req.query;
 
-    const query = {};
+    let query = supabase.from('evidence').select('*', { count: 'exact' });
 
-    // Filter by status
     if (status) {
-      query.status = status;
+      query = query.eq('status', status);
     }
-
-    // Filter by evidence type
     if (type) {
-      query.evidenceType = type;
+      query = query.eq('evidenceType', type);
     }
-
-    // Filter by case number
     if (caseNumber) {
-      query.caseNumber = { $regex: caseNumber.trim(), $options: 'i' };
+      query = query.ilike('caseNumber', `%${caseNumber.trim()}%`);
     }
 
-    // Search query matching title, evidenceId, caseNumber, or description
     if (search && search.trim()) {
       const term = search.trim();
-      query.$or = [
-        { title: { $regex: term, $options: 'i' } },
-        { evidenceId: { $regex: term, $options: 'i' } },
-        { caseNumber: { $regex: term, $options: 'i' } },
-        { description: { $regex: term, $options: 'i' } },
-      ];
+      query = query.or(`title.ilike.%${term}%,evidenceId.ilike.%${term}%,caseNumber.ilike.%${term}%,description.ilike.%${term}%`);
     }
 
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
     const skip = (pageNum - 1) * limitNum;
 
-    const total = await Evidence.countDocuments(query);
-    const evidenceList = await Evidence.find(query)
-      .populate('uploadedBy', 'name email role')
-      .populate('currentHolder', 'name email role')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limitNum);
+    query = query.order('createdAt', { ascending: false }).range(skip, skip + limitNum - 1);
+
+    const { data: evidenceList, count: total, error } = await query;
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const populated = await populateUsers(evidenceList || []);
 
     res.status(200).json({
       success: true,
-      count: evidenceList.length,
-      total,
+      count: populated.length,
+      total: total || 0,
       page: pageNum,
-      pages: Math.ceil(total / limitNum) || 1,
-      data: evidenceList,
+      pages: Math.ceil((total || 0) / limitNum) || 1,
+      data: populated,
     });
   } catch (err) {
     next(err);
@@ -194,16 +198,12 @@ const getEvidenceById = async (req, res, next) => {
       });
     }
 
-    const populated = await Evidence.findById(evidence._id)
-      .populate('uploadedBy', 'name email role')
-      .populate('currentHolder', 'name email role')
-      .populate('notes.addedBy', 'name email role');
+    const populated = await populateUsers(evidence);
 
-    // Audit log evidence viewing
     await logAudit({
       req,
       action: 'EVIDENCE_VIEWED',
-      evidenceId: evidence._id,
+      evidenceId: evidence.id,
       details: `Evidence ${evidence.evidenceId} viewed by ${req.user.name}`,
     });
 
@@ -230,24 +230,28 @@ const verifyEvidence = async (req, res, next) => {
       });
     }
 
-    // Check if the physical file exists on the server
-    if (!fs.existsSync(evidence.filePath)) {
-      evidence.integrityStatus = 'Failed';
-      evidence.lastVerifiedAt = new Date();
-      await evidence.save();
+    const currentUserId = req.user.id || req.user._id;
 
-      await CustodyLog.create({
-        evidence: evidence._id,
+    if (!fs.existsSync(evidence.filePath)) {
+      const now = new Date().toISOString();
+      await supabase
+        .from('evidence')
+        .update({ integrityStatus: 'Failed', lastVerifiedAt: now })
+        .eq('id', evidence.id);
+
+      await supabase.from('custody_logs').insert({
+        id: crypto.randomUUID(),
+        evidence: evidence.id,
         action: 'VERIFIED',
-        performedBy: req.user._id,
+        performedBy: currentUserId,
         remarks: 'CRITICAL INTEGRITY FAILURE: Physical evidence file missing from disk!',
-        timestamp: new Date(),
+        timestamp: now,
       });
 
       await logAudit({
         req,
         action: 'EVIDENCE_VERIFIED',
-        evidenceId: evidence._id,
+        evidenceId: evidence.id,
         details: `Integrity check FAILED: Physical file missing for ${evidence.evidenceId}`,
       });
 
@@ -260,42 +264,43 @@ const verifyEvidence = async (req, res, next) => {
           currentHash: null,
           integrityStatus: 'Failed',
           isMatch: false,
-          lastVerifiedAt: evidence.lastVerifiedAt,
+          lastVerifiedAt: now,
           error: 'File not found on filesystem',
         },
       });
     }
 
-    // Step 1: Compute current SHA-256 hash from disk
     const currentHash = await calculateFileHash(evidence.filePath);
-
-    // Step 2: Compare with reference sha256Hash (NEVER OVERWRITE original sha256Hash!)
     const isMatch = currentHash.toLowerCase() === evidence.sha256Hash.toLowerCase();
     const newIntegrityStatus = isMatch ? 'Verified' : 'Failed';
+    const now = new Date().toISOString();
 
-    evidence.integrityStatus = newIntegrityStatus;
-    evidence.lastVerifiedAt = new Date();
+    const updatePayload = {
+      integrityStatus: newIntegrityStatus,
+      lastVerifiedAt: now,
+    };
+
     if (isMatch && evidence.status === 'Uploaded') {
-      evidence.status = 'Verified';
+      updatePayload.status = 'Verified';
     }
-    await evidence.save();
 
-    // Step 3: Append to Chain of Custody
-    await CustodyLog.create({
-      evidence: evidence._id,
+    await supabase.from('evidence').update(updatePayload).eq('id', evidence.id);
+
+    await supabase.from('custody_logs').insert({
+      id: crypto.randomUUID(),
+      evidence: evidence.id,
       action: 'VERIFIED',
-      performedBy: req.user._id,
+      performedBy: currentUserId,
       remarks: isMatch
         ? `Integrity check PASSED. Computed SHA-256 matches reference hash: ${currentHash.substring(0, 16)}...`
         : `CRITICAL INTEGRITY FAILURE. Hash mismatch! Original: ${evidence.sha256Hash.substring(0, 16)}..., Current: ${currentHash.substring(0, 16)}...`,
-      timestamp: new Date(),
+      timestamp: now,
     });
 
-    // Step 4: Audit log
     await logAudit({
       req,
       action: 'EVIDENCE_VERIFIED',
-      evidenceId: evidence._id,
+      evidenceId: evidence.id,
       details: `Evidence ${evidence.evidenceId} verified by ${req.user.name}. Result: ${newIntegrityStatus} (Match: ${isMatch})`,
     });
 
@@ -310,7 +315,7 @@ const verifyEvidence = async (req, res, next) => {
         currentHash,
         integrityStatus: newIntegrityStatus,
         isMatch,
-        lastVerifiedAt: evidence.lastVerifiedAt,
+        lastVerifiedAt: now,
       },
     });
   } catch (err) {
@@ -339,35 +344,43 @@ const addEvidenceNote = async (req, res, next) => {
       });
     }
 
+    const currentUserId = req.user.id || req.user._id;
+
     const newNote = {
       text: text.trim(),
-      addedBy: req.user._id,
+      addedBy: currentUserId,
       addedByName: req.user.name,
-      addedAt: new Date(),
+      addedAt: new Date().toISOString(),
     };
 
-    evidence.notes.push(newNote);
-    await evidence.save();
+    const currentNotes = Array.isArray(evidence.notes) ? evidence.notes : [];
+    const updatedNotes = [...currentNotes, newNote];
 
-    await CustodyLog.create({
-      evidence: evidence._id,
+    await supabase
+      .from('evidence')
+      .update({ notes: updatedNotes, updatedAt: new Date().toISOString() })
+      .eq('id', evidence.id);
+
+    await supabase.from('custody_logs').insert({
+      id: crypto.randomUUID(),
+      evidence: evidence.id,
       action: 'NOTE_ADDED',
-      performedBy: req.user._id,
+      performedBy: currentUserId,
       remarks: `Note added: "${text.trim().substring(0, 60)}${text.trim().length > 60 ? '...' : ''}"`,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     });
 
     await logAudit({
       req,
       action: 'STATUS_CHANGED',
-      evidenceId: evidence._id,
+      evidenceId: evidence.id,
       details: `Note appended to ${evidence.evidenceId} by ${req.user.name}`,
     });
 
     res.status(200).json({
       success: true,
       message: 'Note added successfully.',
-      data: evidence.notes,
+      data: updatedNotes,
     });
   } catch (err) {
     next(err);
@@ -397,29 +410,36 @@ const updateEvidenceStatus = async (req, res, next) => {
       });
     }
 
+    const currentUserId = req.user.id || req.user._id;
     const previousStatus = evidence.status;
-    evidence.status = status;
-    await evidence.save();
 
-    await CustodyLog.create({
-      evidence: evidence._id,
+    const { data: updatedEvidence } = await supabase
+      .from('evidence')
+      .update({ status, updatedAt: new Date().toISOString() })
+      .eq('id', evidence.id)
+      .select('*')
+      .single();
+
+    await supabase.from('custody_logs').insert({
+      id: crypto.randomUUID(),
+      evidence: evidence.id,
       action: 'STATUS_CHANGED',
-      performedBy: req.user._id,
+      performedBy: currentUserId,
       remarks: `Status updated from '${previousStatus}' to '${status}'`,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     });
 
     await logAudit({
       req,
       action: 'STATUS_CHANGED',
-      evidenceId: evidence._id,
+      evidenceId: evidence.id,
       details: `Status of ${evidence.evidenceId} changed from ${previousStatus} to ${status} by ${req.user.name}`,
     });
 
     res.status(200).json({
       success: true,
       message: `Status updated to ${status}.`,
-      data: evidence,
+      data: formatRecord(updatedEvidence || evidence),
     });
   } catch (err) {
     next(err);

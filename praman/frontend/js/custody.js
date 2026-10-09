@@ -7,6 +7,13 @@ let selectedEvidenceId = null;
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth();
 
+  const user = getUser();
+  const topActionBtn = document.querySelector('.top-bar-actions a');
+  if (topActionBtn && user && user.role === 'court_officer') {
+    topActionBtn.href = 'court-evidence.html';
+    topActionBtn.textContent = 'Court Evidence Vault';
+  }
+
   const urlParams = new URLSearchParams(window.location.search);
   const evidenceIdParam = urlParams.get('evidenceId');
 
@@ -27,20 +34,31 @@ async function populateEvidenceSelector(preselectedId) {
   const selectEl = document.getElementById('select-evidence');
   if (!selectEl) return;
 
+  const user = getUser();
+  const endpoint = user && user.role === 'court_officer' ? '/court/evidence?limit=100' : '/evidence?limit=100';
+
   try {
-    const res = await api.get('/evidence?limit=100');
+    const res = await api.get(endpoint);
     if (!res || !res.data) return;
 
-    selectEl.innerHTML = '<option value="">-- Choose Evidence Item --</option>' +
-      res.data
-        .map((ev) => `<option value="${ev._id}" ${preselectedId === ev._id ? 'selected' : ''}>${ev.evidenceId} - ${escapeHtml(ev.title)} (${escapeHtml(ev.caseNumber)})</option>`)
+    const evidenceItems = res.data;
+
+    selectEl.innerHTML =
+      '<option value="">-- Choose Evidence Item --</option>' +
+      evidenceItems
+        .map(
+          (ev) =>
+            `<option value="${ev._id}" ${preselectedId === ev._id ? 'selected' : ''}>${ev.evidenceId} - ${escapeHtml(
+              ev.title
+            )} (${escapeHtml(ev.caseNumber)})</option>`
+        )
         .join('');
 
     if (preselectedId) {
       selectedEvidenceId = preselectedId;
       loadCustodyTimeline(preselectedId);
-    } else if (res.data.length > 0) {
-      selectedEvidenceId = res.data[0]._id;
+    } else if (evidenceItems.length > 0) {
+      selectedEvidenceId = evidenceItems[0]._id;
       selectEl.value = selectedEvidenceId;
       loadCustodyTimeline(selectedEvidenceId);
     }
@@ -52,6 +70,7 @@ async function populateEvidenceSelector(preselectedId) {
 async function loadCustodyTimeline(evidenceId) {
   const container = document.getElementById('custody-timeline-container');
   const detailsHeader = document.getElementById('evidence-custody-header');
+  const user = getUser();
 
   try {
     container.innerHTML = '<p style="padding: 20px; color: var(--text-secondary);">Loading chain of custody logs...</p>';
@@ -63,6 +82,11 @@ async function loadCustodyTimeline(evidenceId) {
 
     // Render evidence header bar
     if (detailsHeader) {
+      const detailsLink =
+        user && user.role === 'court_officer'
+          ? `court-review.html?id=${evidence._id}`
+          : `evidence-details.html?id=${evidence._id}`;
+
       detailsHeader.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
           <div>
@@ -72,7 +96,7 @@ async function loadCustodyTimeline(evidenceId) {
             <span style="font-size: 12.5px; color: var(--text-secondary);">Case Number: <strong>${escapeHtml(evidence.caseNumber)}</strong></span>
           </div>
           <div style="display: flex; gap: 8px;">
-            <a href="evidence-details.html?id=${evidence._id}" class="btn btn-secondary btn-sm">Full Details</a>
+            <a href="${detailsLink}" class="btn btn-secondary btn-sm">Full Dossier Details</a>
           </div>
         </div>
       `;
@@ -136,6 +160,11 @@ function getMarkerClass(action) {
       return 'marker-status';
     case 'NOTE_ADDED':
       return 'marker-note';
+    case 'SUBMITTED_TO_COURT':
+      return 'marker-transfer';
+    case 'COURT_REVIEWED':
+    case 'COURT_ACCEPTED':
+      return 'marker-verify';
     default:
       return '';
   }
@@ -153,6 +182,11 @@ function getActionIcon(action) {
       return '⚡';
     case 'NOTE_ADDED':
       return '📝';
+    case 'SUBMITTED_TO_COURT':
+      return '🏛️';
+    case 'COURT_REVIEWED':
+    case 'COURT_ACCEPTED':
+      return '⚖️';
     default:
       return '●';
   }
@@ -170,6 +204,12 @@ function formatActionLabel(action) {
       return 'Case Status Modification';
     case 'NOTE_ADDED':
       return 'Forensic Observation Appended';
+    case 'SUBMITTED_TO_COURT':
+      return 'Submitted for Judicial Court Review';
+    case 'COURT_REVIEWED':
+      return 'Court Officer Integrity Review';
+    case 'COURT_ACCEPTED':
+      return 'Accepted into Official Court Record';
     default:
       return action;
   }

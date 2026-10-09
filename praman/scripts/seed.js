@@ -1,69 +1,99 @@
 const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
-const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
-// Load environment variables
+// Load environment variables from .env
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const { connectDB, disconnectDB } = require('../backend/config/db');
-const User = require('../backend/models/User');
-const Evidence = require('../backend/models/Evidence');
-const CustodyLog = require('../backend/models/CustodyLog');
-const AuditLog = require('../backend/models/AuditLog');
+const { supabase } = require('../backend/config/db');
 const { calculateFileHash } = require('../backend/utils/hashFile');
+
+// Helper to check Supabase response errors
+const checkError = (res, stepName) => {
+  if (res && res.error) {
+    throw new Error(`[${stepName} Failed]: ${res.error.message} (Code: ${res.error.code || 'N/A'})`);
+  }
+};
 
 const seedData = async () => {
   try {
-    console.log('[PRAMAN Seed] Connecting to database...');
-    await connectDB();
-
+    console.log('[PRAMAN Seed] Connecting to Supabase...');
     console.log('[PRAMAN Seed] Clearing existing records...');
-    await User.deleteMany({});
-    await Evidence.deleteMany({});
-    await CustodyLog.deleteMany({});
-    await AuditLog.deleteMany({});
+
+    const resDel1 = await supabase.from('custody_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    checkError(resDel1, 'Clear custody_logs');
+
+    const resDel2 = await supabase.from('audit_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    checkError(resDel2, 'Clear audit_logs');
+
+    const resDel3 = await supabase.from('evidence').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    checkError(resDel3, 'Clear evidence');
+
+    const resDel4 = await supabase.from('users').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    checkError(resDel4, 'Clear users');
 
     console.log('[PRAMAN Seed] Creating demo users...');
-    const admin = await User.create({
-      name: 'Dr. Evelyn Reed (Chief Admin)',
-      email: 'admin@praman.com',
-      password: 'Admin@123',
-      role: 'admin',
-      isActive: true,
-    });
 
-    const investigator = await User.create({
-      name: 'Inspector Vikram Patel',
-      email: 'investigator@praman.com',
-      password: 'Investigator@123',
-      role: 'investigator',
-      isActive: true,
-    });
+    const salt = await bcrypt.genSalt(10);
+    const adminPass = await bcrypt.hash('Admin@123', salt);
+    const invPass = await bcrypt.hash('Investigator@123', salt);
+    const forensicPass = await bcrypt.hash('Forensic@123', salt);
+    const courtPass = await bcrypt.hash('Court@123', salt);
 
-    const forensic = await User.create({
-      name: 'Dr. Sarah Lin (Forensic Officer)',
-      email: 'forensic@praman.com',
-      password: 'Forensic@123',
-      role: 'forensic',
-      isActive: true,
-    });
+    const adminId = crypto.randomUUID();
+    const invId = crypto.randomUUID();
+    const forensicId = crypto.randomUUID();
+    const courtId = crypto.randomUUID();
+    const now = new Date().toISOString();
 
-    const courtOfficer = await User.create({
-      name: 'Hon. Justice Aditi Sharma (Court Officer)',
-      email: 'court@praman.com',
-      password: 'Court@123',
-      role: 'court_officer',
-      isActive: true,
-    });
+    const resUsers = await supabase.from('users').insert([
+      {
+        id: adminId,
+        name: 'Dr. Evelyn Reed (Chief Admin)',
+        email: 'admin@praman.com',
+        password: adminPass,
+        role: 'admin',
+        isActive: true,
+        createdAt: now,
+      },
+      {
+        id: invId,
+        name: 'Inspector Vikram Patel',
+        email: 'investigator@praman.com',
+        password: invPass,
+        role: 'investigator',
+        isActive: true,
+        createdAt: now,
+      },
+      {
+        id: forensicId,
+        name: 'Dr. Sarah Lin (Forensic Officer)',
+        email: 'forensic@praman.com',
+        password: forensicPass,
+        role: 'forensic',
+        isActive: true,
+        createdAt: now,
+      },
+      {
+        id: courtId,
+        name: 'Hon. Justice Aditi Sharma (Court Officer)',
+        email: 'court@praman.com',
+        password: courtPass,
+        role: 'court_officer',
+        isActive: true,
+        createdAt: now,
+      },
+    ]);
+    checkError(resUsers, 'Insert users');
 
     console.log('[PRAMAN Seed] Users created:');
     console.log(' - Admin: admin@praman.com / Admin@123');
     console.log(' - Investigator: investigator@praman.com / Investigator@123');
     console.log(' - Forensic: forensic@praman.com / Forensic@123');
-    console.log(' - Court Officer: court@praman.com / Court@123 [NEW]');
+    console.log(' - Court Officer: court@praman.com / Court@123');
 
-    // Create a real sample evidence file on disk
     const uploadDir = path.join(__dirname, '../backend/uploads');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
@@ -88,8 +118,11 @@ Cryptographic verification required under IT Act Section 65B guidelines.`;
     fs.writeFileSync(sampleFilePath, sampleContent, 'utf-8');
     const realHash = await calculateFileHash(sampleFilePath);
 
-    // Create sample Evidence document (submitted to court)
-    const evidence1 = await Evidence.create({
+    const ev1Id = crypto.randomUUID();
+    const ev1Date = new Date(Date.now() - 3600000 * 24).toISOString();
+
+    const resEv1 = await supabase.from('evidence').insert({
+      id: ev1Id,
       evidenceId: 'EV-2026-0001',
       caseNumber: 'CR-2026-9042',
       title: 'Financial Server Access Log & Ledger',
@@ -101,40 +134,46 @@ Cryptographic verification required under IT Act Section 65B guidelines.`;
       mimeType: 'text/plain',
       fileSize: Buffer.byteLength(sampleContent),
       sha256Hash: realHash,
-      uploadedBy: investigator._id,
-      uploadedAt: new Date(Date.now() - 3600000 * 24),
-      currentHolder: investigator._id,
+      uploadedBy: invId,
+      uploadedAt: ev1Date,
+      currentHolder: invId,
       status: 'Verified',
       integrityStatus: 'Verified',
-      lastVerifiedAt: new Date(Date.now() - 3600000 * 12),
+      lastVerifiedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
       courtReviewStatus: 'Pending Court Review',
-      courtAssignedTo: courtOfficer._id,
+      courtAssignedTo: courtId,
       notes: [
         {
           text: 'Initial forensic clone extracted without physical tampering.',
-          addedBy: investigator._id,
-          addedByName: investigator.name,
+          addedBy: invId,
+          addedByName: 'Inspector Vikram Patel',
           noteType: 'investigator',
-          addedAt: new Date(Date.now() - 3600000 * 24),
+          addedAt: ev1Date,
         },
         {
           text: 'Forensic integrity hash verified against server logs. Cleared for judicial submission.',
-          addedBy: forensic._id,
-          addedByName: forensic.name,
+          addedBy: forensicId,
+          addedByName: 'Dr. Sarah Lin (Forensic Officer)',
           noteType: 'forensic',
-          addedAt: new Date(Date.now() - 3600000 * 12),
+          addedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
         },
       ],
+      createdAt: ev1Date,
+      updatedAt: now,
     });
+    checkError(resEv1, 'Insert Evidence 1');
 
-    // Evidence 2: Internal Investigation Only (NOT submitted to court)
     const sample2FileName = 'encrypted-usb-partition.bin';
     const sample2FilePath = path.join(uploadDir, `ev-seed-${sample2FileName}`);
     const sample2Content = `RAW PHYSICAL DISK DUMP - SUSPECT USB DRIVE SEIZED AT SCENE`;
     fs.writeFileSync(sample2FilePath, sample2Content, 'utf-8');
     const realHash2 = await calculateFileHash(sample2FilePath);
 
-    const evidence2 = await Evidence.create({
+    const ev2Id = crypto.randomUUID();
+    const ev2Date = new Date(Date.now() - 3600000 * 6).toISOString();
+
+    const resEv2 = await supabase.from('evidence').insert({
+      id: ev2Id,
       evidenceId: 'EV-2026-0002',
       caseNumber: 'CR-2026-9080',
       title: 'Encrypted Flash Drive Raw Dump',
@@ -146,101 +185,114 @@ Cryptographic verification required under IT Act Section 65B guidelines.`;
       mimeType: 'application/octet-stream',
       fileSize: Buffer.byteLength(sample2Content),
       sha256Hash: realHash2,
-      uploadedBy: investigator._id,
-      uploadedAt: new Date(Date.now() - 3600000 * 6),
-      currentHolder: investigator._id,
+      uploadedBy: invId,
+      uploadedAt: ev2Date,
+      currentHolder: invId,
       status: 'Under Review',
       integrityStatus: 'Not Checked',
       courtReviewStatus: 'None',
       notes: [
         {
           text: 'Bitstream image captured using hardware write-blocker.',
-          addedBy: investigator._id,
-          addedByName: investigator.name,
+          addedBy: invId,
+          addedByName: 'Inspector Vikram Patel',
           noteType: 'investigator',
-          addedAt: new Date(Date.now() - 3600000 * 6),
+          addedAt: ev2Date,
         },
       ],
+      createdAt: ev2Date,
+      updatedAt: now,
     });
+    checkError(resEv2, 'Insert Evidence 2');
 
-    // Create Custody Logs
-    await CustodyLog.create([
+    const resCustody = await supabase.from('custody_logs').insert([
       {
-        evidence: evidence1._id,
+        id: crypto.randomUUID(),
+        evidence: ev1Id,
         action: 'UPLOADED',
         fromUser: null,
-        toUser: investigator._id,
-        performedBy: investigator._id,
+        toUser: invId,
+        performedBy: invId,
         remarks: `Initial evidence ingestion. Generated SHA-256: ${realHash}`,
-        timestamp: new Date(Date.now() - 3600000 * 24),
+        timestamp: ev1Date,
       },
       {
-        evidence: evidence1._id,
+        id: crypto.randomUUID(),
+        evidence: ev1Id,
         action: 'TRANSFERRED',
-        fromUser: investigator._id,
-        toUser: forensic._id,
-        performedBy: investigator._id,
+        fromUser: invId,
+        toUser: forensicId,
+        performedBy: invId,
         remarks: `Transferred to Forensic Lab for integrity certification.`,
-        timestamp: new Date(Date.now() - 3600000 * 18),
+        timestamp: new Date(Date.now() - 3600000 * 18).toISOString(),
       },
       {
-        evidence: evidence1._id,
+        id: crypto.randomUUID(),
+        evidence: ev1Id,
         action: 'VERIFIED',
-        performedBy: forensic._id,
+        fromUser: null,
+        toUser: null,
+        performedBy: forensicId,
         remarks: `Forensic officer certified SHA-256 match.`,
-        timestamp: new Date(Date.now() - 3600000 * 12),
+        timestamp: new Date(Date.now() - 3600000 * 12).toISOString(),
       },
       {
-        evidence: evidence1._id,
+        id: crypto.randomUUID(),
+        evidence: ev1Id,
         action: 'SUBMITTED_TO_COURT',
-        fromUser: forensic._id,
-        toUser: courtOfficer._id,
-        performedBy: forensic._id,
+        fromUser: forensicId,
+        toUser: courtId,
+        performedBy: forensicId,
         remarks: `Submitted to Court for evidentiary review in Case CR-2026-9042.`,
-        timestamp: new Date(Date.now() - 3600000 * 8),
+        timestamp: new Date(Date.now() - 3600000 * 8).toISOString(),
       },
       {
-        evidence: evidence2._id,
+        id: crypto.randomUUID(),
+        evidence: ev2Id,
         action: 'UPLOADED',
         fromUser: null,
-        toUser: investigator._id,
-        performedBy: investigator._id,
+        toUser: invId,
+        performedBy: invId,
         remarks: `Internal ingestion. Generated SHA-256: ${realHash2}`,
-        timestamp: new Date(Date.now() - 3600000 * 6),
+        timestamp: ev2Date,
       },
     ]);
+    checkError(resCustody, 'Insert custody logs');
 
-    // Create Audit Logs
-    await AuditLog.create([
+    const resAudit = await supabase.from('audit_logs').insert([
       {
-        user: admin._id,
+        id: crypto.randomUUID(),
+        user: adminId,
         action: 'LOGIN_SUCCESS',
         details: 'Admin logged into system for routine inspection',
         ipAddress: '127.0.0.1',
-        timestamp: new Date(Date.now() - 3600000 * 25),
+        timestamp: new Date(Date.now() - 3600000 * 25).toISOString(),
       },
       {
-        user: investigator._id,
+        id: crypto.randomUUID(),
+        user: invId,
         action: 'EVIDENCE_UPLOADED',
-        evidence: evidence1._id,
+        evidence: ev1Id,
         details: `Evidence EV-2026-0001 ingested for Case #CR-2026-9042`,
         ipAddress: '127.0.0.1',
-        timestamp: new Date(Date.now() - 3600000 * 24),
+        timestamp: ev1Date,
       },
       {
-        user: forensic._id,
+        id: crypto.randomUUID(),
+        user: forensicId,
         action: 'STATUS_CHANGED',
-        evidence: evidence1._id,
+        evidence: ev1Id,
         details: `Evidence EV-2026-0001 submitted to court for judicial review`,
         ipAddress: '127.0.0.1',
-        timestamp: new Date(Date.now() - 3600000 * 8),
+        timestamp: new Date(Date.now() - 3600000 * 8).toISOString(),
       },
     ]);
+    checkError(resAudit, 'Insert audit logs');
 
     console.log('[PRAMAN Seed] Initial database seeding completed successfully!');
     process.exit(0);
   } catch (err) {
-    console.error('[PRAMAN Seed] Error seeding database:', err);
+    console.error('[PRAMAN Seed Failure]:', err.message);
     process.exit(1);
   }
 };
