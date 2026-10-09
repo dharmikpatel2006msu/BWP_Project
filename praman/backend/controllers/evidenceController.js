@@ -20,9 +20,20 @@ const findEvidenceByIdOrCode = async (idParam) => {
 
 // @desc    Upload new digital evidence
 // @route   POST /api/evidence
-// @access  Private (Admin, Investigator)
+// @access  Private (Investigator ONLY)
 const uploadEvidence = async (req, res, next) => {
   try {
+    // Strict Limitation: System Admin is an observer and CANNOT ingest evidence
+    if (req.user.role === 'admin') {
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(403).json({
+        success: false,
+        message: 'Strict Security Limitation: System Admin is an observer for governance and cannot upload evidence.',
+      });
+    }
+
     const { title, caseNumber, description, evidenceType, notes } = req.body;
 
     if (!req.file) {
@@ -139,8 +150,15 @@ const uploadEvidence = async (req, res, next) => {
 const getEvidenceList = async (req, res, next) => {
   try {
     const { search, status, type, caseNumber, page = 1, limit = 10 } = req.query;
+    const currentUserId = req.user.id || req.user._id;
 
     let query = supabase.from('evidence').select('*', { count: 'exact' });
+
+    // Localized Visibility ("Need-to-Know") for Forensic Expert:
+    // Forensic experts ONLY see evidence items explicitly routed/assigned to them or held by them
+    if (req.user.role === 'forensic') {
+      query = query.or(`currentHolder.eq.${currentUserId},uploadedBy.eq.${currentUserId},courtAssignedTo.eq.${currentUserId}`);
+    }
 
     if (status) {
       query = query.eq('status', status);
@@ -196,6 +214,21 @@ const getEvidenceById = async (req, res, next) => {
         success: false,
         message: 'Evidence not found.',
       });
+    }
+
+    // Need-to-Know check for Forensic Expert: must be assigned or current holder
+    const currentUserId = String(req.user.id || req.user._id);
+    if (req.user.role === 'forensic') {
+      const isHolder = evidence.currentHolder && String(evidence.currentHolder) === currentUserId;
+      const isUploader = evidence.uploadedBy && String(evidence.uploadedBy) === currentUserId;
+      const isAssigned = evidence.courtAssignedTo && String(evidence.courtAssignedTo) === currentUserId;
+
+      if (!isHolder && !isUploader && !isAssigned) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access Denied: Forensic Expert workspace is restricted to assigned evidence cases only.',
+        });
+      }
     }
 
     const populated = await populateUsers(evidence);
@@ -325,9 +358,16 @@ const verifyEvidence = async (req, res, next) => {
 
 // @desc    Add forensic note to evidence
 // @route   POST /api/evidence/:id/notes
-// @access  Private
+// @access  Private (Investigator, Forensic Expert)
 const addEvidenceNote = async (req, res, next) => {
   try {
+    if (req.user.role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Strict Security Limitation: System Admin is an observer for governance and cannot edit evidence files.',
+      });
+    }
+
     const { text } = req.body;
     if (!text || !text.trim()) {
       return res.status(400).json({
@@ -366,7 +406,7 @@ const addEvidenceNote = async (req, res, next) => {
       evidence: evidence.id,
       action: 'NOTE_ADDED',
       performedBy: currentUserId,
-      remarks: `Note added: "${text.trim().substring(0, 60)}${text.trim().length > 60 ? '...' : ''}"`,
+      remarks: `Technical analysis note added: "${text.trim().substring(0, 60)}${text.trim().length > 60 ? '...' : ''}"`,
       timestamp: new Date().toISOString(),
     });
 
@@ -374,7 +414,7 @@ const addEvidenceNote = async (req, res, next) => {
       req,
       action: 'STATUS_CHANGED',
       evidenceId: evidence.id,
-      details: `Note appended to ${evidence.evidenceId} by ${req.user.name}`,
+      details: `Technical note appended to ${evidence.evidenceId} by ${req.user.name} (${req.user.role})`,
     });
 
     res.status(200).json({
@@ -389,9 +429,16 @@ const addEvidenceNote = async (req, res, next) => {
 
 // @desc    Update evidence status (Under Review, Assigned, Verified, Archived)
 // @route   PATCH /api/evidence/:id/status
-// @access  Private (Admin, Forensic Officer)
+// @access  Private (Forensic Officer)
 const updateEvidenceStatus = async (req, res, next) => {
   try {
+    if (req.user.role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Strict Security Limitation: System Admin is an observer for governance and cannot edit evidence status.',
+      });
+    }
+
     const { status } = req.body;
     const allowedStatuses = ['Uploaded', 'Under Review', 'Assigned', 'Verified', 'Archived'];
 

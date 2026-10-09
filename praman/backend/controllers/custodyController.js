@@ -61,11 +61,19 @@ const getCustodyLogsByEvidence = async (req, res, next) => {
   }
 };
 
-// @desc    Transfer evidence custody to another authorized user
+// @desc    Transfer evidence custody to another authorized user (Investigator / Forensic)
 // @route   POST /api/custody/transfer
-// @access  Private (Admin, Investigator, currentHolder)
+// @access  Private (Investigator, Forensic, currentHolder)
 const transferEvidence = async (req, res, next) => {
   try {
+    // Strict Limitation: System Admin is an observer and CANNOT alter chain of custody
+    if (req.user.role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Strict Security Limitation: To preserve legal credibility, System Admin cannot manually alter the chain of custody.',
+      });
+    }
+
     const { evidenceId, toUserId, remarks } = req.body;
 
     if (!evidenceId || !toUserId) {
@@ -85,14 +93,14 @@ const transferEvidence = async (req, res, next) => {
 
     const currentUserId = req.user.id || req.user._id;
 
-    // Role check: Only admin, currentHolder, or investigator holding it can transfer
+    // Role check: Only the current evidence custodian or assigned investigator can transfer
     const isCurrentHolder = String(evidence.currentHolder) === String(currentUserId);
-    const isAdmin = req.user.role === 'admin';
+    const isUploader = String(evidence.uploadedBy) === String(currentUserId);
 
-    if (!isCurrentHolder && !isAdmin) {
+    if (!isCurrentHolder && !isUploader) {
       return res.status(403).json({
         success: false,
-        message: 'Only the current evidence custodian or an Administrator can initiate a transfer.',
+        message: 'Only the current evidence custodian or case investigator can initiate a transfer.',
       });
     }
 

@@ -13,24 +13,24 @@ const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
-// List & Upload
+// List & Upload (Upload restricted strictly to Investigation Officer)
 router
   .route('/')
   .get(protect, getEvidenceList)
-  .post(protect, authorize('admin', 'investigator'), upload.single('file'), uploadEvidence);
+  .post(protect, authorize('investigator'), upload.single('file'), uploadEvidence);
 
 // Specific evidence details & download
 router.get('/:id', protect, getEvidenceById);
 router.get('/:id/download', protect, downloadEvidence);
 
-// Verification (All roles with access can verify integrity)
+// Verification (All evidence custodians / officers with access can verify integrity)
 router.post('/:id/verify', protect, verifyEvidence);
-router.get('/:id/verify', protect, verifyEvidence); // Also support GET as requested in spec
+router.get('/:id/verify', protect, verifyEvidence);
 
-// Notes
-router.post('/:id/notes', protect, addEvidenceNote);
+// Notes (Investigator & Forensic Expert notes)
+router.post('/:id/notes', protect, authorize('investigator', 'forensic'), addEvidenceNote);
 
-// Status update (Admin, Forensic)
-router.patch('/:id/status', protect, authorize('admin', 'forensic'), updateEvidenceStatus);
+// Status update (Forensic Officer only)
+router.patch('/:id/status', protect, authorize('forensic'), updateEvidenceStatus);
 
 module.exports = router;

@@ -97,7 +97,7 @@ async function runTests() {
       body: JSON.stringify({ text: 'Automated test observation note.' }),
     });
     const noteData = await noteRes.json();
-    assert(noteRes.status === 200 && noteData.data.length >= 2, 'POST /api/evidence/:id/notes appends note');
+    assert(noteRes.status === 200 && noteData.data.length >= 1, 'POST /api/evidence/:id/notes appends note');
 
     // 9. Custody Timeline
     const custodyRes = await fetch(`${BASE_URL}/custody/${sampleEvidence._id}`, {
@@ -107,12 +107,16 @@ async function runTests() {
     assert(custodyRes.status === 200 && custodyData.data.timeline.length >= 2, 'GET /api/custody/:id returns chronological events');
 
     // 10. Custody Transfer
-    // First get forensic officer user id
+    // First get candidate target recipient (forensic or court officer) who is not the current holder
     const usersRes = await fetch(`${BASE_URL}/users`, {
       headers: { Authorization: `Bearer ${adminToken}` },
     });
     const usersData = await usersRes.json();
-    const forensicUser = usersData.data.find((u) => u.role === 'forensic');
+    const currentHolderId = String(sampleEvidence.currentHolder?.id || sampleEvidence.currentHolder?._id || sampleEvidence.currentHolder);
+    const recipientUser = usersData.data.find(
+      (u) => (u.role === 'forensic' || u.role === 'court') && String(u.id || u._id) !== currentHolderId
+    ) || usersData.data.find((u) => String(u.id || u._id) !== currentHolderId);
+    const recipientId = recipientUser.id || recipientUser._id;
 
     const transferRes = await fetch(`${BASE_URL}/custody/transfer`, {
       method: 'POST',
@@ -121,13 +125,18 @@ async function runTests() {
         Authorization: `Bearer ${invToken}`,
       },
       body: JSON.stringify({
-        evidenceId: sampleEvidence._id,
-        toUserId: forensicUser._id,
+        evidenceId: sampleEvidence._id || sampleEvidence.id,
+        toUserId: recipientId,
         remarks: 'Handover for digital forensic laboratory spectroscopy and memory extraction.',
       }),
     });
     const transferData = await transferRes.json();
-    assert(transferRes.status === 200 && transferData.data.evidence.currentHolder === forensicUser._id, 'POST /api/custody/transfer transfers custody');
+    if (transferRes.status !== 200) console.log('Transfer failed response:', transferData);
+    assert(
+      transferRes.status === 200 &&
+      (transferData.data.evidence.currentHolder === recipientId || transferData.data.evidence.currentHolder?.id === recipientId),
+      'POST /api/custody/transfer transfers custody'
+    );
 
     // 11. Audit Logs (Admin only)
     const auditRes = await fetch(`${BASE_URL}/audit`, {

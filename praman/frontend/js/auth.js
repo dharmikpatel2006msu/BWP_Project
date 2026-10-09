@@ -77,6 +77,13 @@ function requireAuth(allowedRoles = []) {
     }
   }
 
+  // 5. System Admin Role Protection (Observer only: zero access to evidence ingestion)
+  if (user.role === 'admin' && currentFile === 'upload.html') {
+    alert(`Access Denied: System Admin is an observer for governance and cannot ingest or upload evidence files.`);
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
   // Explicit allowedRoles check if passed
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
     alert(`Access Denied: '${user.role}' role is not authorized to view this page.`);
@@ -184,8 +191,8 @@ function initNavigation() {
         </a>
       `;
 
-      // Upload link: Admin & Investigator ONLY
-      if (user.role === 'admin' || user.role === 'investigator') {
+      // Upload link: Investigator ONLY
+      if (user.role === 'investigator') {
         navHtml += `
           <a href="upload.html" id="nav-upload" class="nav-item ${currentPath === 'upload.html' ? 'active' : ''}">
             <span class="nav-icon">📤</span>

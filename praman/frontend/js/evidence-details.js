@@ -71,16 +71,32 @@ function renderDetails(ev) {
     custodyBtn.href = `custody.html?evidenceId=${ev._id}`;
   }
 
-  // Role permissions check for Transfer button
+  // Strict Role Permissions Enforcement for Action Buttons
   const user = getUser();
   const transferBtn = document.getElementById('btn-open-transfer');
-  if (transferBtn) {
-    const isHolder = ev.currentHolder && (ev.currentHolder._id === user.id || ev.currentHolder === user.id);
-    const isAdmin = user.role === 'admin';
-    if (!isHolder && !isAdmin) {
-      transferBtn.style.display = 'none';
-    } else {
-      transferBtn.style.display = 'inline-flex';
+  const noteBtn = document.getElementById('btn-open-note');
+  const courtSubmitBtn = document.getElementById('btn-open-court-submit');
+
+  if (user.role === 'admin') {
+    // System Admin is an observer for governance: NO evidence modification or transfer
+    if (transferBtn) transferBtn.style.display = 'none';
+    if (noteBtn) noteBtn.style.display = 'none';
+    if (courtSubmitBtn) courtSubmitBtn.style.display = 'none';
+  } else {
+    const isHolder = ev.currentHolder && (ev.currentHolder._id === user.id || ev.currentHolder === user.id || ev.currentHolder.id === user.id);
+    const isUploader = ev.uploadedBy && (ev.uploadedBy._id === user.id || ev.uploadedBy === user.id || ev.uploadedBy.id === user.id);
+
+    if (transferBtn) {
+      transferBtn.style.display = (isHolder || isUploader) ? 'inline-flex' : 'none';
+      if (user.role === 'investigator') {
+        transferBtn.innerHTML = '<span>🔄</span> Assign / Transfer Custody';
+      }
+    }
+    if (noteBtn) {
+      noteBtn.style.display = 'inline-flex';
+    }
+    if (courtSubmitBtn) {
+      courtSubmitBtn.style.display = (user.role === 'investigator' || user.role === 'forensic') ? 'inline-flex' : 'none';
     }
   }
 }
@@ -106,7 +122,7 @@ function renderNotes(notes) {
   if (!notesContainer) return;
 
   if (notes.length === 0) {
-    notesContainer.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px;">No forensic notes recorded for this evidence.</p>';
+    notesContainer.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px;">No forensic observations recorded for this evidence.</p>';
     return;
   }
 
@@ -141,7 +157,6 @@ function setupActions() {
         renderIntegrityBadge(data.integrityStatus);
         document.getElementById('display-verified-at').textContent = formatDate(data.lastVerifiedAt);
 
-        // Show verification result comparison modal/box
         if (resultCard) {
           resultCard.style.display = 'block';
           const isMatch = data.isMatch;
@@ -198,7 +213,7 @@ function setupActions() {
 }
 
 function setupModals() {
-  // Transfer Modal
+  // Transfer / Assign Modal
   const transferModal = document.getElementById('modal-transfer');
   const openTransferBtn = document.getElementById('btn-open-transfer');
   const closeTransferBtn = document.getElementById('btn-close-transfer');
@@ -208,15 +223,18 @@ function setupModals() {
 
   if (openTransferBtn && transferModal) {
     openTransferBtn.addEventListener('click', async () => {
-      // Populate recipients
       try {
         const res = await api.get('/users?active=true');
         if (res && res.data) {
           const user = getUser();
-          recipientSelect.innerHTML = '<option value="">-- Select Recipient User --</option>' +
+          recipientSelect.innerHTML = '<option value="">-- Select Target Officer / Expert --</option>' +
             res.data
-              .filter((u) => u._id !== user.id)
-              .map((u) => `<option value="${u._id}">${escapeHtml(u.name)} (${u.role.toUpperCase()}) - ${escapeHtml(u.email)}</option>`)
+              .filter((u) => u.role !== 'admin' && u._id !== user.id && u.id !== user.id)
+              .map((u) => {
+                const isForensic = u.role === 'forensic';
+                const roleLabel = isForensic ? '🔬 FORENSIC EXPERT' : u.role.toUpperCase();
+                return `<option value="${u._id}">${escapeHtml(u.name)} (${roleLabel}) - ${escapeHtml(u.email)}</option>`;
+              })
               .join('');
         }
       } catch (e) {
@@ -241,16 +259,16 @@ function setupModals() {
       }
 
       confirmTransferBtn.disabled = true;
-      confirmTransferBtn.textContent = 'Transferring...';
+      confirmTransferBtn.textContent = 'Routing...';
 
       try {
         await api.post('/custody/transfer', {
           evidenceId: currentEvidence._id,
           toUserId,
-          remarks,
+          remarks: remarks || 'Assigned / Transferred in workflow chain.',
         });
 
-        showToast('Custody transferred successfully!', 'success');
+        showToast('Custody / Assignment routed successfully!', 'success');
         closeTransfer();
         await loadEvidenceDetails(currentEvidence._id);
       } catch (err) {
@@ -294,7 +312,7 @@ function setupModals() {
 
       try {
         const res = await api.post(`/evidence/${currentEvidence._id}/notes`, { text });
-        showToast('Note appended to record!', 'success');
+        showToast('Technical observation appended to record!', 'success');
         closeNote();
         renderNotes(res.data);
       } catch (err) {

@@ -6,6 +6,34 @@ const { populateUsers, populateEvidence } = require('../utils/populateHelper');
 // @access  Private
 const getDashboardStats = async (req, res, next) => {
   try {
+    const userRole = req.user.role;
+    const currentUserId = String(req.user.id || req.user._id);
+
+    let countFilter = supabase.from('evidence').select('*', { count: 'exact', head: true });
+    let listQuery = supabase.from('evidence').select('*');
+    let typeQuery = supabase.from('evidence').select('evidenceType');
+
+    let verifiedQuery = supabase.from('evidence').select('*', { count: 'exact', head: true }).eq('integrityStatus', 'Verified');
+    let pendingQuery = supabase.from('evidence').select('*', { count: 'exact', head: true }).eq('integrityStatus', 'Not Checked');
+    let failedQuery = supabase.from('evidence').select('*', { count: 'exact', head: true }).eq('integrityStatus', 'Failed');
+
+    if (userRole === 'forensic') {
+      const condition = `currentHolder.eq.${currentUserId},uploadedBy.eq.${currentUserId},courtAssignedTo.eq.${currentUserId}`;
+      countFilter = countFilter.or(condition);
+      listQuery = listQuery.or(condition);
+      typeQuery = typeQuery.or(condition);
+      verifiedQuery = verifiedQuery.or(condition);
+      pendingQuery = pendingQuery.or(condition);
+      failedQuery = failedQuery.or(condition);
+    } else if (userRole === 'court_officer') {
+      countFilter = countFilter.neq('courtReviewStatus', 'None');
+      listQuery = listQuery.neq('courtReviewStatus', 'None');
+      typeQuery = typeQuery.neq('courtReviewStatus', 'None');
+      verifiedQuery = verifiedQuery.neq('courtReviewStatus', 'None');
+      pendingQuery = pendingQuery.neq('courtReviewStatus', 'None');
+      failedQuery = failedQuery.neq('courtReviewStatus', 'None');
+    }
+
     const [
       { count: totalEvidence },
       { count: verifiedEvidence },
@@ -16,14 +44,14 @@ const getDashboardStats = async (req, res, next) => {
       { data: rawRecentActivity },
       { data: typeData },
     ] = await Promise.all([
-      supabase.from('evidence').select('*', { count: 'exact', head: true }),
-      supabase.from('evidence').select('*', { count: 'exact', head: true }).eq('integrityStatus', 'Verified'),
-      supabase.from('evidence').select('*', { count: 'exact', head: true }).eq('integrityStatus', 'Not Checked'),
-      supabase.from('evidence').select('*', { count: 'exact', head: true }).eq('integrityStatus', 'Failed'),
+      countFilter,
+      verifiedQuery,
+      pendingQuery,
+      failedQuery,
       supabase.from('users').select('*', { count: 'exact', head: true }).eq('isActive', true),
-      supabase.from('evidence').select('*').order('createdAt', { ascending: false }).limit(6),
+      listQuery.order('createdAt', { ascending: false }).limit(6),
       supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(6),
-      supabase.from('evidence').select('evidenceType'),
+      typeQuery,
     ]);
 
     const recentEvidence = await populateUsers(rawRecentEvidence || [], ['uploadedBy', 'currentHolder']);

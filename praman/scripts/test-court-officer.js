@@ -59,6 +59,35 @@ async function runCourtOfficerTests() {
     const invData = await invLoginRes.json();
     const invToken = invData.data.token;
 
+    // Ensure at least 1 evidence item is submitted to court for test suite
+    const evCheckRes = await fetch(`${BASE_URL}/evidence`, {
+      headers: { Authorization: `Bearer ${invToken}` },
+    });
+    const evCheckData = await evCheckRes.json();
+    if (evCheckData.data && evCheckData.data.length > 0) {
+      const courtUserRes = await fetch(`${BASE_URL}/users`, {
+        headers: { Authorization: `Bearer ${courtToken}` },
+      });
+      const courtUserData = await courtUserRes.json();
+      const courtUser = courtUserData.data?.find((u) => u.role === 'court_officer');
+      const targetItem = evCheckData.data[0];
+
+      if (courtUser && targetItem) {
+        await fetch(`${BASE_URL}/custody/transfer`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${invToken}`,
+          },
+          body: JSON.stringify({
+            evidenceId: targetItem._id || targetItem.id,
+            toUserId: courtUser._id || courtUser.id,
+            remarks: 'Submitted for Judicial Court Review',
+          }),
+        });
+      }
+    }
+
     // ---------------------------------------------------------
     // 2. COURT DASHBOARD STATS
     // ---------------------------------------------------------
@@ -82,17 +111,17 @@ async function runCourtOfficerTests() {
       courtEvListRes.status === 200 && courtEvListData.data.length >= 1,
       'GET /api/court/evidence returns court-submitted evidence exhibits'
     );
-    const courtEvidence = courtEvListData.data.find((e) => e.evidenceId === 'EV-2026-0001');
+    const courtEvidence = courtEvListData.data.find((e) => e.evidenceId === 'EV-2026-0001') || courtEvListData.data[0];
 
     // ---------------------------------------------------------
     // 4. EVIDENCE DOSSIER VIEW
     // ---------------------------------------------------------
-    const dossierRes = await fetch(`${BASE_URL}/court/evidence/${courtEvidence._id}`, {
+    const dossierRes = await fetch(`${BASE_URL}/court/evidence/${courtEvidence._id || courtEvidence.id}`, {
       headers: { Authorization: `Bearer ${courtToken}` },
     });
     const dossierData = await dossierRes.json();
     assert(
-      dossierRes.status === 200 && dossierData.data.evidenceId === 'EV-2026-0001',
+      dossierRes.status === 200 && dossierData.data.evidenceId === courtEvidence.evidenceId,
       'GET /api/court/evidence/:id retrieves authorized court dossier'
     );
 

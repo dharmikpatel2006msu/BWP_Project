@@ -3,7 +3,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  requireAuth(['admin', 'investigator']);
+  requireAuth(['investigator']);
 
   const form = document.getElementById('upload-form');
   const fileInput = document.getElementById('evidence-file');
