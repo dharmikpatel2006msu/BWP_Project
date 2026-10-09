@@ -14,10 +14,11 @@
 - **Automated SHA-256 Ingestion Hashing:** Calculates cryptographic SHA-256 hashes using Node.js stream processing upon upload, preventing high RAM overhead.
 - **On-Demand Integrity Verification:** Re-computes the physical file hash and compares it directly against the baseline reference hash to immediately flag file alterations or tampering.
 - **Append-Only Chain of Custody:** Tracks every lifecycle event (`UPLOADED`, `ASSIGNED`, `TRANSFERRED`, `VERIFIED`, `STATUS_CHANGED`, `NOTE_ADDED`) in a chronological vertical timeline.
-- **Role-Based Access Control (RBAC):** Strict backend enforcement for three distinct operational roles:
-  - **Administrator:** Full visibility, user provisioning, security audit logs, XML export.
-  - **Investigator:** Evidence ingestion, searching, evidence transfer, initial note logging.
-  - **Forensic Officer:** Technical verification, lab notes, status updates.
+- **Role-Based Access Control (RBAC):** Strict backend enforcement for four distinct operational roles:
+  - **System Admin:** Global read-only governance and oversight, user provisioning, security audit logs, XML export. Strict zero-access to evidence ingestion or modification.
+  - **Investigation Officer:** Evidence ingestion, generating SHA-256 hashes, custody routing to Forensics or Court.
+  - **Forensic Expert:** Technical verification, lab notes. Localized "Need-to-Know" visibility (only sees assigned/routed evidence).
+  - **Court Officer:** Judicial chamber endpoint for uneditable custody review, verification, and Section 65B XML certificate export.
 - **Security Audit Logging & XML Export:** Automated auditing of security events (`LOGIN_SUCCESS`, `EVIDENCE_VERIFIED`, etc.) with one-click export to safe XML.
 - **Modern Forensic Theme:** Professional Dark Navy (`#081330`) and crisp slate white surface design with status badges and monospace hash displays.
 
@@ -27,8 +28,8 @@
 
 - **Frontend:** HTML5, CSS3 (Vanilla design tokens, responsive layout), Vanilla JavaScript (ES6+), Fetch API.
 - **Backend:** Node.js, Express.js (RESTful API architecture).
-- **Database:** MongoDB with Mongoose ODM (Object references and indexes).
-- **Authentication:** JSON Web Tokens (JWT) + bcryptjs password hashing.
+- **Database:** Supabase (PostgreSQL) via `@supabase/supabase-js`.
+- **Authentication:** Supabase Auth (or custom JWT) + Role-based middleware.
 - **File Uploads:** Multer with file type/MIME inspection and filename sanitization.
 - **Hashing:** Node.js native `crypto` module (Streaming SHA-256).
 - **XML Generation:** `xmlbuilder2` for safe, well-formed XML exports.
@@ -64,12 +65,9 @@ praman/
 ├── backend/
 │   ├── server.js                # Express app entry point & static server
 │   ├── config/
-│   │   └── db.js                # MongoDB connection & standalone fallback
+│   │   └── db.js                # Supabase client initialization
 │   ├── models/
-│   │   ├── User.js              # User schema with bcrypt hooks
-│   │   ├── Evidence.js          # Evidence metadata, reference hash & notes
-│   │   ├── CustodyLog.js        # Append-only custody lifecycle model
-│   │   └── AuditLog.js          # System audit trail schema
+│   │   └── schema.sql           # PostgreSQL database schema & tables
 │   ├── controllers/
 │   │   ├── authController.js
 │   │   ├── evidenceController.js
@@ -109,8 +107,7 @@ praman/
 
 ### Prerequisites
 - **Node.js** (v18 or higher recommended)
-- **MongoDB** (Local instance running at `mongodb://127.0.0.1:27017` OR MongoDB Atlas connection string)
-  > *Note: If a local MongoDB instance is not detected, an in-memory fallback will attempt to start for demo resilience.*
+- **Supabase Account** (Project URL and Anon Key required for PostgreSQL database)
 
 ### Step 1: Install Dependencies
 Open a terminal in the `praman` directory:
@@ -127,7 +124,8 @@ cp .env.example .env
 Default `.env` contents:
 ```ini
 PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/praman_db
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
 JWT_SECRET=praman_super_secret_jwt_key_2026_forensics
 NODE_ENV=development
 ```
@@ -157,8 +155,8 @@ The login page features **one-click autofill buttons** for rapid presentation:
 
 | Role | Email | Password | Allowed Capabilities |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin@praman.com` | `Admin@123` | Full system control, Audit trail, XML export, User management |
-| **Investigator** | `investigator@praman.com` | `Investigator@123` | Evidence upload, Evidence search, Custody transfers, Notes |
+| **System Admin** | `admin@praman.com` | `Admin@123` | Global read-only governance, Audit trail, XML export, User management (Cannot upload evidence) |
+| **Investigator** | `investigator@praman.com` | `Investigator@123` | Evidence ingestion (upload), Evidence routing, Custody transfers, Notes |
 | **Forensic Officer** | `forensic@praman.com` | `Forensic@123` | Assigned evidence view, Cryptographic verification, Lab notes |
 | **Court Officer** | `court@praman.com` | `Court@123` | Court evidence review, SHA-256 verification, Custody audit, Notes, Acceptance, Clarification requests, Reports |
 
