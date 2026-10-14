@@ -1,0 +1,9 @@
+node_modules/
+**/node_modules/
+.env
+**/.env
+.env.local
+.DS_Store
+Thumbs.db
+praman/backend/uploads/*
+!praman/backend/uploads/.gitkeep
