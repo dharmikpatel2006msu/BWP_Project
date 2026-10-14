@@ -10,19 +10,36 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     @media print {
-      .sidebar, .top-bar, .no-print {
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .sidebar, .top-bar, .no-print, .btn, #toast-container {
         display: none !important;
       }
-      .main-area {
-        margin-left: 0 !important;
+      .app-shell, .main-area {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
       }
       .content-container {
         padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
       }
-      .card {
-        border: 1px solid #ccc !important;
+      #report-sheet-card {
+        border: none !important;
         box-shadow: none !important;
-        page-break-inside: avoid;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        page-break-inside: auto;
+      }
+      .court-stamp {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
     }
   </style>
@@ -92,15 +109,9 @@
             <p>Certified cryptographic integrity review & chain of custody summary</p>
           </div>
         </div>
-        <div class="top-bar-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button id="btn-export-cert-xml" class="btn btn-secondary btn-sm" title="Download official Section 65B XML certificate">
-            <span>📜</span> Export Section 65B XML
-          </button>
-          <button id="btn-export-dossier-json" class="btn btn-secondary btn-sm" title="Export full evidentiary dossier as JSON">
-            <span>💾</span> Export JSON
-          </button>
+        <div class="top-bar-actions">
           <button id="btn-print-report" class="btn btn-primary btn-sm">
-            <span>🖨️</span> Print / Save PDF
+            <span>🖨️</span> Save as PDF / Print
           </button>
         </div>
       </header>
