@@ -65,6 +65,14 @@ function renderDetails(ev) {
     };
   }
 
+  // Judicial / Court Status Display
+  const courtStatusEl = document.getElementById('display-court-status');
+  const isSubmittedToCourt = ev.courtReviewStatus && ev.courtReviewStatus !== 'None';
+  if (courtStatusEl) {
+    courtStatusEl.textContent = isSubmittedToCourt ? ev.courtReviewStatus : 'Not Submitted';
+    courtStatusEl.style.color = isSubmittedToCourt ? 'var(--cyan)' : 'var(--text-secondary)';
+  }
+
   // Chain of custody link
   const custodyBtn = document.getElementById('btn-view-custody');
   if (custodyBtn) {
@@ -96,7 +104,29 @@ function renderDetails(ev) {
       noteBtn.style.display = 'inline-flex';
     }
     if (courtSubmitBtn) {
-      courtSubmitBtn.style.display = (user.role === 'investigator' || user.role === 'forensic') ? 'inline-flex' : 'none';
+      if (isSubmittedToCourt) {
+        courtSubmitBtn.style.display = 'inline-flex';
+        courtSubmitBtn.disabled = true;
+        courtSubmitBtn.classList.add('btn-submitted');
+        courtSubmitBtn.style.pointerEvents = 'none';
+        courtSubmitBtn.style.opacity = '0.75';
+        courtSubmitBtn.style.background = 'rgba(14, 165, 233, 0.12)';
+        courtSubmitBtn.style.borderColor = 'var(--cyan)';
+        courtSubmitBtn.style.color = 'var(--cyan)';
+        courtSubmitBtn.innerHTML = `<span>🏛️</span> Submitted to Court (${escapeHtml(ev.courtReviewStatus)})`;
+        courtSubmitBtn.title = `Evidence is currently under judicial review: ${ev.courtReviewStatus}`;
+      } else {
+        courtSubmitBtn.style.display = (user.role === 'investigator' || user.role === 'forensic') ? 'inline-flex' : 'none';
+        courtSubmitBtn.disabled = false;
+        courtSubmitBtn.classList.remove('btn-submitted');
+        courtSubmitBtn.style.pointerEvents = 'auto';
+        courtSubmitBtn.style.opacity = '1';
+        courtSubmitBtn.style.background = '';
+        courtSubmitBtn.style.borderColor = '';
+        courtSubmitBtn.style.color = '';
+        courtSubmitBtn.innerHTML = '<span>⚖️</span> Submit to Court';
+        courtSubmitBtn.title = 'Submit this evidence for judicial court review';
+      }
     }
   }
 }
@@ -334,6 +364,10 @@ function setupModals() {
 
   if (openCourtBtn && courtModal) {
     openCourtBtn.addEventListener('click', async () => {
+      if (currentEvidence && currentEvidence.courtReviewStatus && currentEvidence.courtReviewStatus !== 'None') {
+        showToast(`This evidence has already been submitted to the court (${currentEvidence.courtReviewStatus}).`, 'info');
+        return;
+      }
       try {
         const res = await api.get('/users?active=true');
         if (res && res.data) {

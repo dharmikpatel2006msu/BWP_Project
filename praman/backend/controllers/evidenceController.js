@@ -53,6 +53,31 @@ const uploadEvidence = async (req, res, next) => {
       });
     }
 
+    // Category vs File extension restriction
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const categoryExtensions = {
+      'Document': ['.pdf', '.txt', '.docx', '.doc', '.log', '.rtf', '.odt'],
+      'Image': ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.svg'],
+      'Audio': ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'],
+      'Video': ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.webm'],
+      'Disk Image': ['.dd', '.raw', '.img', '.iso', '.bin', '.vmdk', '.e01'],
+      'Memory Dump': ['.dmp', '.dump', '.raw', '.bin', '.mem'],
+      'Network Log': ['.pcap', '.pcapng', '.cap', '.log', '.txt'],
+    };
+
+    if (evidenceType && categoryExtensions[evidenceType]) {
+      const allowed = categoryExtensions[evidenceType];
+      if (!allowed.includes(ext)) {
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(400).json({
+          success: false,
+          message: `Category Mismatch: Cannot upload a '${ext}' file under category '${evidenceType}'. Allowed formats: ${allowed.join(', ')}`,
+        });
+      }
+    }
+
     const sha256Hash = await calculateFileHash(req.file.path);
     const evidenceId = await generateEvidenceId();
     const currentUserId = req.user.id || req.user._id;

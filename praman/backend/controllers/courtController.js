@@ -614,6 +614,13 @@ const submitEvidenceToCourt = async (req, res, next) => {
       });
     }
 
+    if (evidence.courtReviewStatus && evidence.courtReviewStatus !== 'None') {
+      return res.status(400).json({
+        success: false,
+        message: `This evidence has already been submitted to the court (Current status: ${evidence.courtReviewStatus}).`,
+      });
+    }
+
     let courtOfficer = null;
     if (courtOfficerId) {
       const { data: officer } = await supabase
