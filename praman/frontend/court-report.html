@@ -92,7 +92,13 @@
             <p>Certified cryptographic integrity review & chain of custody summary</p>
           </div>
         </div>
-        <div class="top-bar-actions">
+        <div class="top-bar-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button id="btn-export-cert-xml" class="btn btn-secondary btn-sm" title="Download official Section 65B XML certificate">
+            <span>📜</span> Export Section 65B XML
+          </button>
+          <button id="btn-export-dossier-json" class="btn btn-secondary btn-sm" title="Export full evidentiary dossier as JSON">
+            <span>💾</span> Export JSON
+          </button>
           <button id="btn-print-report" class="btn btn-primary btn-sm">
             <span>🖨️</span> Print / Save PDF
           </button>
@@ -101,32 +107,46 @@
 
       <div class="content-container">
         <!-- Exhibit Selector Toolbar (no-print) -->
-        <div class="card no-print" style="max-width: 860px; margin: 0 auto 20px auto; padding: 16px 24px; border: 1px solid var(--border);">
+        <div class="card no-print" style="max-width: 900px; margin: 0 auto 20px auto; padding: 18px 24px; border: 1px solid var(--border);">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 20px;">📜</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 24px;">📜</span>
               <div>
-                <strong style="font-size: 13.5px; color: var(--text-primary); display: block;">Select Court Exhibit</strong>
+                <strong style="font-size: 14px; color: var(--text-primary); display: block;">Select Court Exhibit</strong>
                 <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Generate judicial certificate and Section 65B compliance report</p>
               </div>
             </div>
-            <select id="select-report-evidence" class="form-control" style="max-width: 380px;">
+            <select id="select-report-evidence" class="form-control" style="max-width: 440px; font-weight: 600;">
               <option value="">Loading court exhibits...</option>
             </select>
           </div>
         </div>
 
+        <!-- Empty State (Shown if no court exhibits exist) -->
+        <div id="report-empty-state" class="card" style="display: none; max-width: 900px; margin: 0 auto; text-align: center; padding: 48px 24px;">
+          <div style="font-size: 40px; margin-bottom: 12px; opacity: 0.8;">⚖️</div>
+          <h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">No Court Exhibits Available</h3>
+          <p style="font-size: 13.5px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 20px auto; line-height: 1.5;">
+            Evidence records must first be submitted to the court chamber before official Section 65B judicial review certificates can be compiled.
+          </p>
+          <a href="court-evidence.html" class="btn btn-primary">
+            <span>📜</span> View Court Evidence Vault
+          </a>
+        </div>
+
         <!-- Printable Report Sheet -->
-        <div class="card" style="max-width: 860px; margin: 0 auto; padding: 36px 40px;">
+        <div id="report-sheet-card" class="card" style="max-width: 900px; margin: 0 auto; padding: 40px 48px;">
           <!-- Formal Header -->
           <div style="border-bottom: 2px solid var(--navy-900); padding-bottom: 20px; margin-bottom: 24px; text-align: center;">
-            <div style="font-size: 28px; margin-bottom: 6px;">⚖️</div>
-            <h2 style="font-size: 20px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--navy-900);">
+            <div style="font-size: 32px; margin-bottom: 6px;">⚖️</div>
+            <h2 style="font-size: 21px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--navy-900);">
               P.R.A.M.A.N Digital Evidence Review Certificate
             </h2>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
-              Judicial Admissibility & Cryptographic Integrity Verification Report
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin-top: 4px;">
+              Judicial Admissibility & Cryptographic Integrity Verification Report (Section 65B Electronic Record Compliance)
             </p>
+            <!-- Dynamic Judicial Stamp Seal -->
+            <div id="rep-stamp-container" style="text-align: center; margin-top: 14px;"></div>
           </div>
 
           <!-- Section 1: Identification & Metadata -->

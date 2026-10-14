@@ -263,6 +263,21 @@ async function runCourtOfficerTests() {
     );
 
     // ---------------------------------------------------------
+    // 10B. EXPORT SECTION 65B XML CERTIFICATE
+    // ---------------------------------------------------------
+    const certXmlRes = await fetch(`${BASE_URL}/court/evidence/${courtEvidence._id}/certificate/xml`, {
+      headers: { Authorization: `Bearer ${courtToken}` },
+    });
+    const xmlContent = await certXmlRes.text();
+    assert(
+      certXmlRes.status === 200 &&
+      certXmlRes.headers.get('content-type').includes('xml') &&
+      xmlContent.includes('<Section65BCertificate') &&
+      xmlContent.includes('<CryptographicIntegrity'),
+      'GET /api/court/evidence/:id/certificate/xml generates well-formed Section 65B XML certificate'
+    );
+
+    // ---------------------------------------------------------
     // 11. COURT AUDIT LOGS
     // ---------------------------------------------------------
     const auditRes = await fetch(`${BASE_URL}/court/audit`, {

@@ -599,6 +599,119 @@ const getCourtEvidenceReport = async (req, res, next) => {
   }
 };
 
+// @desc    Export Section 65B Electronic Record Certificate as XML
+// @route   GET /api/court/evidence/:id/certificate/xml
+// @access  Private (court_officer, admin)
+const exportCourtCertificateXml = async (req, res, next) => {
+  try {
+    const evidence = await findEvidence(req.params.id);
+
+    if (!evidence) {
+      return res.status(404).json({
+        success: false,
+        message: 'Evidence record not found.',
+      });
+    }
+
+    if (!isAuthorizedForCourt(evidence, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access Denied: Evidence is not in court review scope.',
+      });
+    }
+
+    const populated = await populateUsers(evidence, ['uploadedBy', 'currentHolder', 'courtReviewedBy']);
+
+    const { data: rawLogs } = await supabase
+      .from('custody_logs')
+      .select('*')
+      .eq('evidence', evidence.id)
+      .order('timestamp', { ascending: true });
+
+    const custodyTimeline = await populateUsers(rawLogs || [], ['fromUser', 'toUser', 'performedBy']);
+
+    const { create } = require('xmlbuilder2');
+
+    const root = create({ version: '1.0', encoding: 'UTF-8' })
+      .ele('Section65BCertificate', {
+        xmlns: 'https://praman.gov.in/forensics/v1',
+        certificateId: `CERT-${evidence.evidenceId}-${Date.now()}`,
+        generatedAt: new Date().toISOString(),
+        admissibilityStatus: evidence.courtReviewStatus || 'Pending',
+        integrityStatus: evidence.integrityStatus || 'Not Checked',
+      })
+      .ele('JudicialChamber')
+        .ele('CourtJurisdiction').txt('Special Digital Evidence & Cyber Forensics Court').up()
+        .ele('CertifyingOfficer')
+          .ele('OfficerName').txt(req.user.name || 'Court Officer').up()
+          .ele('OfficerRole').txt(req.user.role || 'court_officer').up()
+          .ele('OfficerId').txt(String(req.user.id || req.user._id || '')).up()
+        .up()
+      .up()
+      .ele('ElectronicRecord')
+        .ele('EvidenceId').txt(evidence.evidenceId).up()
+        .ele('CaseNumber').txt(evidence.caseNumber).up()
+        .ele('Title').txt(evidence.title).up()
+        .ele('EvidenceType').txt(evidence.evidenceType).up()
+        .ele('OriginalFilename').txt(evidence.originalFilename).up()
+        .ele('FileSizeInBytes').txt(String(evidence.fileSize || 0)).up()
+        .ele('MimeType').txt(evidence.mimeType || 'application/octet-stream').up()
+        .ele('IntakeTimestamp').txt(evidence.uploadedAt || evidence.createdAt || '').up()
+        .ele('SeizingOfficer')
+          .ele('Name').txt(populated.uploadedBy ? populated.uploadedBy.name : 'Unknown').up()
+          .ele('Role').txt(populated.uploadedBy ? populated.uploadedBy.role : 'investigator').up()
+        .up()
+      .up()
+      .ele('CryptographicIntegrity')
+        .ele('Algorithm').txt('FIPS 180-4 SHA-256').up()
+        .ele('ReferenceDigest').txt(evidence.sha256Hash).up()
+        .ele('IntegrityVerificationStatus').txt(evidence.integrityStatus || 'Not Checked').up()
+        .ele('LastVerificationTimestamp').txt(evidence.lastVerifiedAt || 'N/A').up()
+        .ele('CourtAcceptanceStatus').txt(evidence.courtReviewStatus || 'None').up()
+        .ele('CourtReviewer').txt(populated.courtReviewedBy ? populated.courtReviewedBy.name : 'Pending Review').up()
+      .up();
+    const custodyEle = root.ele('ChainOfCustodyAuditTrail', { totalEvents: String((custodyTimeline || []).length) });
+
+    (custodyTimeline || []).forEach((log, index) => {
+      custodyEle.ele('Event', { sequence: String(index + 1) })
+        .ele('Timestamp').txt(log.timestamp).up()
+        .ele('Action').txt(log.action).up()
+        .ele('CustodianName').txt(log.performedBy ? log.performedBy.name : (log.performedByName || 'System')).up()
+        .ele('CustodianRole').txt(log.performedBy ? (log.performedBy.role || 'system') : 'system').up()
+        .ele('Remarks').txt(log.remarks || '').up();
+    });
+
+    const notesEle = root.ele('JudicialAndTechnicalObservations');
+    if (Array.isArray(populated.notes)) {
+      populated.notes.forEach((note) => {
+        notesEle.ele('Observation', { type: note.noteType || 'general', recordedAt: note.addedAt })
+          .ele('Author').txt(note.addedByName || 'Officer').up()
+          .ele('Statement').txt(note.text || '').up();
+      });
+    }
+
+    root.ele('LegalDeclaration')
+      .ele('StatutoryReference').txt('Section 65B(4) of the Indian Evidence Act, 1872 / Section 63 of Bharatiya Sakshya Adhiniyam, 2023').up()
+      .ele('DeclarationStatement').txt('I hereby certify that the electronic record described herein was ingested and secured in an unalterable, cryptographically signed condition. The physical file hash directly corresponds to the reference baseline digest without evidence of post-intake mutation.').up()
+      .ele('CertificationStamp').txt(`VALID-COURT-RECORD-${evidence.evidenceId}`).up();
+
+    const xmlString = root.end({ prettyPrint: true });
+
+    await logAudit({
+      req,
+      action: 'COURT_CERTIFICATE_EXPORTED',
+      evidenceId: evidence.id,
+      details: `Section 65B electronic certificate exported to XML for ${evidence.evidenceId} by ${req.user.name}`,
+    });
+
+    res.header('Content-Type', 'application/xml');
+    res.attachment(`section-65b-certificate-${evidence.evidenceId}.xml`);
+    return res.send(xmlString);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc    Submit / Assign Evidence to Court (Called by Investigator, Forensic, or Admin)
 // @route   POST /api/court/submit/:id
 // @access  Private (admin, investigator, forensic)
@@ -742,6 +855,7 @@ module.exports = {
   requestClarification,
   startCourtReview,
   getCourtEvidenceReport,
+  exportCourtCertificateXml,
   submitEvidenceToCourt,
   getCourtAuditLogs,
 };

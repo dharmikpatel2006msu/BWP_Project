@@ -16,6 +16,7 @@ const {
   requestClarification,
   startCourtReview,
   getCourtEvidenceReport,
+  exportCourtCertificateXml,
   submitEvidenceToCourt,
   getCourtAuditLogs,
 } = require('../controllers/courtController');
@@ -35,6 +36,7 @@ router.post('/evidence/:id/accept', protect, authorize('court_officer', 'admin')
 router.post('/evidence/:id/clarification', protect, authorize('court_officer', 'admin'), requestClarification);
 router.post('/evidence/:id/start-review', protect, authorize('court_officer', 'admin'), startCourtReview);
 router.get('/evidence/:id/report', protect, authorize('court_officer', 'admin'), getCourtEvidenceReport);
+router.get('/evidence/:id/certificate/xml', protect, authorize('court_officer', 'admin'), exportCourtCertificateXml);
 router.get('/audit', protect, authorize('court_officer', 'admin'), getCourtAuditLogs);
 
 module.exports = router;

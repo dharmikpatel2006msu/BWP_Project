@@ -1406,3 +1406,68 @@ textarea.form-control {
     padding: 20px 16px;
   }
 }
+
+/* ===================================================================
+   Court Judicial Report & Admissibility Stamps
+   =================================================================== */
+.court-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border: 2px dashed #059669;
+  border-radius: 8px;
+  color: #059669;
+  font-weight: 800;
+  font-size: 13.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(16, 185, 129, 0.08);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+  margin: 14px 0;
+}
+
+.court-stamp-warning {
+  border-color: #d97706;
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.08);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12);
+}
+
+.court-stamp-danger {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.08);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.12);
+}
+
+.court-stamp-info {
+  border-color: #0284c7;
+  color: #0284c7;
+  background: rgba(14, 165, 233, 0.08);
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.12);
+}
+
+.report-note-card {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+}
+
+.report-note-card.note-court {
+  border-left: 4px solid #7c3aed;
+  background: rgba(139, 92, 246, 0.04);
+}
+
+.report-note-card.note-forensic {
+  border-left: 4px solid #0284c7;
+  background: rgba(14, 165, 233, 0.04);
+}
+
+.report-note-card.note-investigator {
+  border-left: 4px solid #059669;
+  background: rgba(16, 185, 129, 0.04);
+}
+
