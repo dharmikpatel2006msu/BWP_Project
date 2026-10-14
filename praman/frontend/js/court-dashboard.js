@@ -76,7 +76,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Render Court Activity List
     if (courtActivityList && recentActivity) {
       if (recentActivity.length === 0) {
-        courtActivityList.innerHTML = '<li style="color: var(--text-secondary); font-size: 13px; padding: 12px;">No judicial court review activity logged yet.</li>';
+        courtActivityList.innerHTML = `
+          <div style="text-align: center; padding: 32px 16px; color: var(--text-secondary);">
+            <div style="font-size: 28px; margin-bottom: 8px; opacity: 0.8;">⚖️</div>
+            <strong style="font-size: 13.5px; color: var(--text-primary); display: block; margin-bottom: 4px;">No Judicial Activity Yet</strong>
+            <p style="font-size: 12px; line-height: 1.4;">Court reviews, verifications, and acceptance records will appear here as proceedings occur.</p>
+          </div>
+        `;
       } else {
         courtActivityList.innerHTML = recentActivity
           .map((act) => `

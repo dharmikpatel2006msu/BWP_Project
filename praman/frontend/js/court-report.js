@@ -9,20 +9,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const urlParams = new URLSearchParams(window.location.search);
   const evidenceId = urlParams.get('id');
+  const selector = document.getElementById('select-report-evidence');
 
-  if (!evidenceId) {
-    showToast('No evidence specified for report. Redirecting to court catalog...', 'warning');
-    setTimeout(() => (window.location.href = 'court-evidence.html'), 1200);
-    return;
-  }
-
+  // Populate exhibit options for instant report generation
   try {
-    const res = await api.get(`/court/evidence/${evidenceId}/report`);
-    if (!res || !res.data) return;
+    const listRes = await api.get('/court/evidence?limit=100');
+    if (listRes && listRes.data && listRes.data.length > 0) {
+      if (selector) {
+        selector.innerHTML = listRes.data
+          .map((ev) => `<option value="${ev._id}" ${(evidenceId === ev._id || (!evidenceId && ev === listRes.data[0])) ? 'selected' : ''}>${ev.evidenceId} - ${escapeHtml(ev.title)} (${escapeHtml(ev.caseNumber)})</option>`)
+          .join('');
 
-    renderReport(res.data);
+        selector.addEventListener('change', () => {
+          if (selector.value) {
+            loadReportForId(selector.value);
+          }
+        });
+      }
+
+      const activeId = evidenceId || listRes.data[0]._id;
+      await loadReportForId(activeId);
+    } else {
+      if (selector) selector.innerHTML = '<option value="">No court exhibits available</option>';
+      showToast('No court exhibits submitted yet.', 'info');
+    }
   } catch (err) {
-    showToast(`Failed to generate report: ${err.message}`, 'error');
+    showToast(`Failed to load court evidence list: ${err.message}`, 'error');
   }
 
   const printBtn = document.getElementById('btn-print-report');
@@ -32,6 +44,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 });
+
+async function loadReportForId(id) {
+  try {
+    const res = await api.get(`/court/evidence/${id}/report`);
+    if (!res || !res.data) return;
+    renderReport(res.data);
+  } catch (err) {
+    showToast(`Failed to generate report: ${err.message}`, 'error');
+  }
+}
 
 function renderReport(data) {
   const { evidence, custodyTimeline, notesBreakdown, generatedAt, generatedBy } = data;
@@ -58,40 +80,40 @@ function renderReport(data) {
   document.getElementById('rep-generated-by').textContent = `${generatedBy.name} (${generatedBy.role.replace('_', ' ').toUpperCase()})`;
 
   // Chain of Custody Summary
-  const timelineTbody = document.getElementById('rep-timeline-tbody');
-  if (timelineTbody) {
-    if (custodyTimeline.length === 0) {
-      timelineTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">No custody records logged.</td></tr>';
-    } else {
-      timelineTbody.innerHTML = custodyTimeline
-        .map(
-          (c, idx) => `
-          <tr>
-            <td><strong>#${idx + 1}</strong></td>
-            <td class="mono">${formatDate(c.timestamp)}</td>
-            <td><strong>${c.action}</strong></td>
-            <td>${escapeHtml(c.performedBy?.name || 'Officer')}</td>
-            <td>${escapeHtml(c.remarks || '')}</td>
-          </tr>
-        `
-        )
-        .join('');
-    }
+  const custodyList = document.getElementById('rep-custody-summary');
+  if (custodyList && custodyTimeline) {
+    custodyList.innerHTML = custodyTimeline
+      .map(
+        (c) => `
+        <li style="padding: 6px 0; border-bottom: 1px dotted var(--border);">
+          <strong>${c.action}</strong> • ${formatDate(c.timestamp)} — 
+          <span>${escapeHtml(c.remarks || 'No remarks recorded')}</span>
+          <span style="color: var(--text-secondary); font-size: 11px;">(By: ${escapeHtml(c.performedByName || 'Officer')})</span>
+        </li>
+      `
+      )
+      .join('');
   }
 
-  // Court Notes
-  const courtNotesContainer = document.getElementById('rep-court-notes');
-  if (courtNotesContainer) {
-    const courtNotes = notesBreakdown.courtNotes || [];
-    if (courtNotes.length === 0) {
-      courtNotesContainer.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;">No judicial court review notes logged.</p>';
+  // Notes Breakdown
+  const notesContainer = document.getElementById('rep-notes-summary');
+  if (notesContainer) {
+    const allNotes = [
+      ...(notesBreakdown.investigator || []),
+      ...(notesBreakdown.forensic || []),
+      ...(notesBreakdown.court || []),
+      ...(notesBreakdown.other || []),
+    ];
+
+    if (allNotes.length === 0) {
+      notesContainer.innerHTML = '<p style="color: var(--text-secondary); font-size: 12px;">No technical or judicial observations entered.</p>';
     } else {
-      courtNotesContainer.innerHTML = courtNotes
+      notesContainer.innerHTML = allNotes
         .map(
           (n) => `
-          <div style="margin-bottom: 8px; padding: 8px 12px; background: #fbfbfc; border-left: 3px solid #f59e0b;">
-            <p style="font-size: 13px; margin-bottom: 2px;">${escapeHtml(n.text)}</p>
-            <span style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(n.addedByName || 'Court Officer')} • ${formatDate(n.addedAt)}</span>
+          <div style="background: var(--surface); padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 6px; font-size: 12px;">
+            <strong>[${(n.noteType || 'General').toUpperCase()}]</strong> ${escapeHtml(n.text)}
+            <span style="display: block; font-size: 10.5px; color: var(--text-secondary); margin-top: 2px;">Entered by ${escapeHtml(n.addedByName || 'Officer')} • ${formatDate(n.addedAt)}</span>
           </div>
         `
         )
