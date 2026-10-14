@@ -132,7 +132,7 @@
         </div>
 
         <!-- Split Grid: Submitted Evidence & Activity -->
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
+        <div class="dashboard-split-grid">
           <!-- Recent Court Evidence Table -->
           <div class="card" style="margin-bottom: 0;">
             <div class="card-header">
@@ -166,14 +166,17 @@
 
           <!-- Right Column: Court Activity Feed -->
           <div>
-            <div class="card">
+            <div class="card" style="margin-bottom: 0;">
               <div class="card-header">
                 <div class="card-title">
                   <span>⚡</span> Judicial Review Activity
                 </div>
+                <span class="live-pulse-badge">
+                  <span class="pulse-dot"></span> Live Audit
+                </span>
               </div>
-              <ul id="court-activity-list" style="list-style: none;">
-                <li style="font-size: 13px; color: var(--text-secondary);">Loading activity stream...</li>
+              <ul id="court-activity-list" class="activity-feed-timeline">
+                <li style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 20px 0;">Loading activity stream...</li>
               </ul>
             </div>
           </div>

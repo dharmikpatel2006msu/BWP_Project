@@ -85,15 +85,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
       } else {
         courtActivityList.innerHTML = recentActivity
-          .map((act) => `
-            <li style="display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border);">
-              <span class="mono" style="font-size: 11px; color: var(--accent); white-space: nowrap;">${formatDate(act.timestamp)}</span>
-              <div style="flex: 1; font-size: 13px;">
-                <strong>${act.action.replace('COURT_', '')}</strong>
-                <p style="color: var(--text-secondary); font-size: 12px; margin-top: 2px;">${escapeHtml(act.details || '')}</p>
-              </div>
-            </li>
-          `)
+          .map((act) => {
+            const meta = formatCourtActivityItem(act);
+            return `
+              <li class="activity-feed-item">
+                <div class="activity-icon-badge ${meta.iconBgClass}">
+                  ${meta.icon}
+                </div>
+                <div class="activity-body">
+                  <div class="activity-header">
+                    <span class="activity-title">${escapeHtml(meta.title)}</span>
+                    <span class="activity-time">🕒 ${formatDate(act.timestamp)}</span>
+                  </div>
+                  <p class="activity-desc">${escapeHtml(act.details || 'Official judicial event recorded.')}</p>
+                </div>
+              </li>
+            `;
+          })
           .join('');
       }
     }
@@ -101,6 +109,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     showToast(`Failed to load court dashboard metrics: ${err.message}`, 'error');
   }
 });
+
+function formatCourtActivityItem(act) {
+  const action = (act.action || '').toUpperCase();
+  if (action.includes('ACCEPT')) {
+    return {
+      icon: '✅',
+      iconBgClass: 'activity-icon-green',
+      title: 'Accepted for Court Record',
+    };
+  }
+  if (action.includes('VERIFY')) {
+    return {
+      icon: '🛡️',
+      iconBgClass: 'activity-icon-blue',
+      title: 'Integrity Verified',
+    };
+  }
+  if (action.includes('CLARIFICATION')) {
+    return {
+      icon: '❓',
+      iconBgClass: 'activity-icon-amber',
+      title: 'Clarification Requested',
+    };
+  }
+  if (action.includes('NOTE')) {
+    return {
+      icon: '📝',
+      iconBgClass: 'activity-icon-purple',
+      title: 'Judicial Minute Recorded',
+    };
+  }
+  if (action.includes('SUBMIT')) {
+    return {
+      icon: '📥',
+      iconBgClass: 'activity-icon-cyan',
+      title: 'Submitted to Court',
+    };
+  }
+  return {
+    icon: '⚖️',
+    iconBgClass: 'activity-icon-slate',
+    title: act.action ? act.action.replace('COURT_', '').replace(/_/g, ' ') : 'Judicial Proceeding',
+  };
+}
 
 function getCourtStatusBadge(status) {
   switch (status) {
