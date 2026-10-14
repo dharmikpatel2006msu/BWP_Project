@@ -14,24 +14,22 @@ const errorHandler = (err, req, res, next) => {
     }
   }
 
-  // Mongoose validation errors
+  // Supabase / PostgreSQL unique constraint violation (code 23505)
+  if (err.code === '23505') {
+    statusCode = 400;
+    message = 'Duplicate record found. A record with this unique identifier already exists.';
+  }
+
+  // Supabase / PostgreSQL foreign key violation (code 23503)
+  if (err.code === '23503') {
+    statusCode = 400;
+    message = 'Referenced entity not found or invalid reference.';
+  }
+
+  // Validation or bad request error
   if (err.name === 'ValidationError') {
     statusCode = 400;
-    const errors = Object.values(err.errors).map((e) => e.message);
-    message = errors.join(', ');
-  }
-
-  // Mongoose duplicate key error
-  if (err.code === 11000) {
-    statusCode = 400;
-    const field = Object.keys(err.keyValue)[0];
-    message = `Duplicate value entered for ${field}. Please use another value.`;
-  }
-
-  // Mongoose bad ObjectId CastError
-  if (err.name === 'CastError') {
-    statusCode = 400;
-    message = `Invalid ID format for parameter: ${err.path}`;
+    message = err.message || 'Validation error';
   }
 
   res.status(statusCode).json({

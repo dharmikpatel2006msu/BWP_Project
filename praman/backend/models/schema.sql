@@ -1,7 +1,7 @@
 -- ===================================================================
 -- P.R.A.M.A.N — Supabase PostgreSQL Relational Database Schema
 -- Portal for Recording and Managing Authentic Nodes
--- Migration from MongoDB (NoSQL) to Supabase (Relational PostgreSQL)
+-- Pure Relational Architecture Powered by Supabase (PostgreSQL)
 -- ===================================================================
 
 -- 1. USERS TABLE
