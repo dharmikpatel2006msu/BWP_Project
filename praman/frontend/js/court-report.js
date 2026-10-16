@@ -165,25 +165,25 @@ function renderCourtStamp(evidence) {
   if (courtStatus === 'Accepted for Court Record' && integrityStatus === 'Verified') {
     container.innerHTML = `
       <div class="court-stamp">
-        <span>⚖️</span> CERTIFIED ADMISSIBLE RECORD — SECTION 65B INDIAN EVIDENCE ACT COMPLIANT
+        CERTIFIED ADMISSIBLE RECORD — SECTION 65B INDIAN EVIDENCE ACT COMPLIANT
       </div>
     `;
   } else if (courtStatus === 'Requires Clarification') {
     container.innerHTML = `
       <div class="court-stamp court-stamp-danger">
-        <span>⚠️</span> JUDICIAL EXAMINATION SUSPENDED — FORMAL CLARIFICATION REQUESTED
+        JUDICIAL EXAMINATION SUSPENDED — FORMAL CLARIFICATION REQUESTED
       </div>
     `;
   } else if (integrityStatus === 'Failed') {
     container.innerHTML = `
       <div class="court-stamp court-stamp-danger">
-        <span>🚨</span> INTEGRITY VERIFICATION FAILED — TAMPERING ALERT
+        INTEGRITY VERIFICATION FAILED — TAMPERING ALERT
       </div>
     `;
   } else {
     container.innerHTML = `
       <div class="court-stamp court-stamp-info">
-        <span>🔍</span> ACTIVE PROCEEDINGS — PENDING FORMAL JUDICIAL ACCEPTANCE
+        ACTIVE PROCEEDINGS — PENDING FORMAL JUDICIAL ACCEPTANCE
       </div>
     `;
   }
@@ -201,9 +201,9 @@ function renderNotesSection(breakdown) {
   const investigatorNotes = breakdown?.investigatorNotes || [];
 
   const all = [
-    ...courtNotes.map((n) => ({ ...n, category: 'court', catLabel: '⚖️ Court Judicial Minute' })),
-    ...forensicNotes.map((n) => ({ ...n, category: 'forensic', catLabel: '🔬 Forensic Laboratory Note' })),
-    ...investigatorNotes.map((n) => ({ ...n, category: 'investigator', catLabel: '🕵️ Ingestion / Investigation Note' })),
+    ...courtNotes.map((n) => ({ ...n, category: 'court', catLabel: 'Judicial Court Minute' })),
+    ...forensicNotes.map((n) => ({ ...n, category: 'forensic', catLabel: 'Forensic Laboratory Observation' })),
+    ...investigatorNotes.map((n) => ({ ...n, category: 'investigator', catLabel: 'Investigative Intake Note' })),
   ];
 
   if (all.length === 0) {
@@ -295,7 +295,7 @@ async function handleExportXml() {
   const btn = document.getElementById('btn-export-cert-xml');
   const origText = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = '<span>⏳</span> Exporting XML...';
+  btn.innerHTML = 'Exporting XML...';
 
   try {
     const res = await api.get(`/court/evidence/${currentExhibitId}/certificate/xml`);

@@ -176,7 +176,7 @@ function renderCourtNotes(notes) {
   let html = '';
 
   if (courtNotes.length > 0) {
-    html += '<h4 style="font-size: 13px; font-weight: 700; color: #f59e0b; margin-bottom: 8px;">⚖️ Judicial Court Observations:</h4>';
+    html += '<h4 style="font-size: 13px; font-weight: 700; color: #f59e0b; margin-bottom: 8px;">Judicial Court Observations:</h4>';
     html += courtNotes
       .map(
         (n) => `
@@ -192,7 +192,7 @@ function renderCourtNotes(notes) {
   }
 
   if (otherNotes.length > 0) {
-    html += '<h4 style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-top: 14px; margin-bottom: 8px;">📋 Investigating / Forensic Notes:</h4>';
+    html += '<h4 style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-top: 14px; margin-bottom: 8px;">Investigating & Forensic Notes:</h4>';
     html += otherNotes
       .map(
         (n) => `
@@ -234,7 +234,12 @@ function setupReviewActions() {
           resultCard.className = `card ${isMatch ? 'alert-success' : 'alert-danger'}`;
           resultCard.innerHTML = `
             <div style="display: flex; gap: 14px; align-items: flex-start;">
-              <span style="font-size: 24px;">${isMatch ? '🛡️' : '⚠️'}</span>
+              <div style="flex-shrink: 0; margin-top: 2px;">
+                ${isMatch 
+                  ? '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--success);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>'
+                  : '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--danger);"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+                }
+              </div>
               <div style="flex: 1;">
                 <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">
                   Judicial Hash Verification: ${data.verificationResult}

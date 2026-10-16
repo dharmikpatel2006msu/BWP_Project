@@ -97,7 +97,7 @@ function renderDetails(ev) {
     if (transferBtn) {
       transferBtn.style.display = (isHolder || isUploader) ? 'inline-flex' : 'none';
       if (user.role === 'investigator') {
-        transferBtn.innerHTML = '<span>🔄</span> Assign / Transfer Custody';
+        transferBtn.innerHTML = 'Assign / Transfer Custody';
       }
     }
     if (noteBtn) {
@@ -113,7 +113,7 @@ function renderDetails(ev) {
         courtSubmitBtn.style.background = 'rgba(14, 165, 233, 0.12)';
         courtSubmitBtn.style.borderColor = 'var(--cyan)';
         courtSubmitBtn.style.color = 'var(--cyan)';
-        courtSubmitBtn.innerHTML = `<span>🏛️</span> Submitted to Court (${escapeHtml(ev.courtReviewStatus)})`;
+        courtSubmitBtn.innerHTML = `Submitted to Court (${escapeHtml(ev.courtReviewStatus)})`;
         courtSubmitBtn.title = `Evidence is currently under judicial review: ${ev.courtReviewStatus}`;
       } else {
         courtSubmitBtn.style.display = (user.role === 'investigator' || user.role === 'forensic') ? 'inline-flex' : 'none';
@@ -124,7 +124,7 @@ function renderDetails(ev) {
         courtSubmitBtn.style.background = '';
         courtSubmitBtn.style.borderColor = '';
         courtSubmitBtn.style.color = '';
-        courtSubmitBtn.innerHTML = '<span>⚖️</span> Submit to Court';
+        courtSubmitBtn.innerHTML = 'Submit to Court';
         courtSubmitBtn.title = 'Submit this evidence for judicial court review';
       }
     }
@@ -194,7 +194,12 @@ function setupActions() {
           resultCard.className = `card ${isMatch ? 'alert-success' : 'alert-danger'}`;
           resultCard.innerHTML = `
             <div style="display: flex; align-items: flex-start; gap: 14px;">
-              <span style="font-size: 24px;">${isMatch ? '🛡️' : '⚠️'}</span>
+              <div style="flex-shrink: 0; margin-top: 2px;">
+                ${isMatch 
+                  ? '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--success);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>'
+                  : '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--danger);"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+                }
+              </div>
               <div style="flex: 1;">
                 <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">
                   ${isMatch ? 'Cryptographic Hash Verification: PASSED' : 'CRITICAL ALERT: HASH MISMATCH / MODIFIED EVIDENCE'}
@@ -262,7 +267,7 @@ function setupModals() {
               .filter((u) => u.role !== 'admin' && u._id !== user.id && u.id !== user.id)
               .map((u) => {
                 const isForensic = u.role === 'forensic';
-                const roleLabel = isForensic ? '🔬 FORENSIC EXPERT' : u.role.toUpperCase();
+                const roleLabel = isForensic ? 'FORENSIC EXPERT' : u.role.toUpperCase();
                 return `<option value="${u._id}">${escapeHtml(u.name)} (${roleLabel}) - ${escapeHtml(u.email)}</option>`;
               })
               .join('');

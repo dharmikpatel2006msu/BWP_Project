@@ -229,6 +229,24 @@ input, select, textarea {
   display: none !important;
 }
 
+.brand-icon-svg {
+  display: inline-block;
+  vertical-align: -3px;
+  color: var(--cyan);
+  flex-shrink: 0;
+}
+
+.sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
 .sidebar-footer {
   padding: 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -632,6 +650,12 @@ input, select, textarea {
   font-size: 22px;
   flex-shrink: 0;
   transition: transform 200ms ease;
+}
+
+.stat-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
 }
 
 .stat-card:hover .stat-icon {

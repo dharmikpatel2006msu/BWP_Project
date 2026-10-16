@@ -20,10 +20,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (actionContainer) {
       actionContainer.innerHTML = `
         <a href="users.html" class="btn btn-primary btn-sm">
-          <span>👥</span> User Management
+          User Management
         </a>
         <a href="audit.html" class="btn btn-secondary btn-sm" style="margin-left: 8px;">
-          <span>📜</span> System Audit Logs
+          System Audit Logs
         </a>
       `;
     }
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (actionContainer) {
       actionContainer.innerHTML = `
         <a href="evidence.html" class="btn btn-primary btn-sm">
-          <span>📁</span> Open Evidence Vault
+          Open Evidence Vault
         </a>
       `;
     }
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (actionContainer) {
       actionContainer.innerHTML = `
         <a href="upload.html" class="btn btn-primary btn-sm">
-          <span>+</span> Ingest Evidence
+          + Ingest Evidence
         </a>
       `;
     }

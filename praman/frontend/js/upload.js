@@ -64,7 +64,7 @@ function validateSelectedFile(file, category) {
     if (!rule.extensions.includes(ext)) {
       return {
         valid: false,
-        message: `❌ Category Mismatch: You cannot upload a "${ext.toUpperCase()}" file under the "${category}" category. Allowed: ${rule.label}. Please select a valid file or switch the category.`,
+        message: `Category Mismatch: You cannot upload a "${ext.toUpperCase()}" file under the "${category}" category. Allowed: ${rule.label}. Please select a valid file or switch the category.`,
       };
     }
   }
