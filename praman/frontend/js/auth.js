@@ -135,27 +135,21 @@ function initNavigation() {
       sidebarNav.innerHTML = `
         <div class="nav-section-title">Judicial Proceedings</div>
         <a href="court-dashboard.html" class="nav-item ${currentPath === 'court-dashboard.html' ? 'active' : ''}">
-          <span class="nav-icon">⚖️</span>
           <span>Court Dashboard</span>
         </a>
         <a href="court-evidence.html" class="nav-item ${currentPath === 'court-evidence.html' ? 'active' : ''}">
-          <span class="nav-icon">📜</span>
           <span>Court Evidence</span>
         </a>
         <a href="court-review.html" class="nav-item ${currentPath === 'court-review.html' ? 'active' : ''}">
-          <span class="nav-icon">🔍</span>
           <span>Court Review</span>
         </a>
         <a href="custody.html" class="nav-item ${currentPath === 'custody.html' ? 'active' : ''}">
-          <span class="nav-icon">⛓️</span>
           <span>Chain of Custody</span>
         </a>
         <a href="court-report.html" class="nav-item ${currentPath === 'court-report.html' ? 'active' : ''}">
-          <span class="nav-icon">🖨️</span>
           <span>Court Reports</span>
         </a>
         <a href="court-activity.html" class="nav-item ${currentPath === 'court-activity.html' ? 'active' : ''}">
-          <span class="nav-icon">⚡</span>
           <span>Court Activity</span>
         </a>
       `;
@@ -182,11 +176,9 @@ function initNavigation() {
       let navHtml = `
         <div class="nav-section-title">Evidence Workspace</div>
         <a href="dashboard.html" class="nav-item ${currentPath === 'dashboard.html' || currentPath === '' ? 'active' : ''}">
-          <span class="nav-icon">📊</span>
           <span>Dashboard</span>
         </a>
         <a href="evidence.html" class="nav-item ${currentPath === 'evidence.html' ? 'active' : ''}">
-          <span class="nav-icon">📁</span>
           <span>Evidence Vault</span>
         </a>
       `;
@@ -195,7 +187,6 @@ function initNavigation() {
       if (user.role === 'investigator') {
         navHtml += `
           <a href="upload.html" id="nav-upload" class="nav-item ${currentPath === 'upload.html' ? 'active' : ''}">
-            <span class="nav-icon">📤</span>
             <span>Upload Evidence</span>
           </a>
         `;
@@ -204,7 +195,6 @@ function initNavigation() {
       // Chain of Custody: Admin, Investigator, Forensic
       navHtml += `
         <a href="custody.html" class="nav-item ${currentPath === 'custody.html' ? 'active' : ''}">
-          <span class="nav-icon">⛓️</span>
           <span>Chain of Custody</span>
         </a>
       `;
@@ -214,11 +204,9 @@ function initNavigation() {
         navHtml += `
           <div class="nav-section-title">Administration</div>
           <a href="audit.html" id="nav-audit" class="nav-item ${currentPath === 'audit.html' ? 'active' : ''}">
-            <span class="nav-icon">📜</span>
             <span>Audit Logs</span>
           </a>
           <a href="users.html" id="nav-users" class="nav-item ${currentPath === 'users.html' ? 'active' : ''}">
-            <span class="nav-icon">👥</span>
             <span>User Management</span>
           </a>
         `;
