@@ -81,6 +81,31 @@
         <!-- Verification Banner (appears when verification is triggered) -->
         <div id="verification-result-card" style="display: none; margin-bottom: 20px;"></div>
 
+        <!-- Clarification Alert Banner (appears when court requests clarification) -->
+        <div id="clarification-alert-banner" style="display: none; margin-bottom: 20px;" class="card alert-warning">
+          <div style="display: flex; align-items: flex-start; gap: 14px;">
+            <div style="flex-shrink: 0; margin-top: 2px;">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" style="color: #f59e0b;">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <div style="flex: 1;">
+              <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 6px; color: #f59e0b;">
+                Judicial Court Action Required: Clarification Requested
+              </h4>
+              <p style="font-size: 13.5px; margin-bottom: 6px; color: var(--text-primary);" id="clarification-alert-text">
+                The presiding court officer has paused review and requested additional information before admitting this exhibit.
+              </p>
+              <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;" id="clarification-alert-meta"></div>
+              <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 0;">
+                Custodial transfer and forensic notes are temporarily re-enabled. Once you have addressed the query or attached notes, click <strong>"Resubmit to Court"</strong> to return the exhibit to active judicial review.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Evidence Header Card -->
         <div class="card">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
@@ -203,26 +228,48 @@
     </main>
   </div>
 
-  <!-- Transfer Custody Modal -->
+  <!-- Transfer / Return Custody Modal -->
   <div class="modal-backdrop" id="modal-transfer">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3>Transfer Chain of Custody</h3>
+        <h3 id="modal-transfer-title">Transfer Chain of Custody</h3>
         <span class="modal-close" id="btn-close-transfer">&times;</span>
       </div>
       <div class="modal-body">
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+        <p id="transfer-modal-desc" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
           Handing over digital evidence transfers full custodial responsibility to the selected officer. An immutable log entry will be added to the chain of custody.
         </p>
-        <div class="form-group">
+
+        <!-- Recipient dropdown (shown for investigator transfer) -->
+        <div class="form-group" id="transfer-recipient-group">
           <label class="form-label" for="transfer-recipient">Select Target Recipient <span class="required">*</span></label>
           <select id="transfer-recipient" class="form-control" required>
             <option value="">Loading active users...</option>
           </select>
         </div>
+
+        <!-- Return Recipient Card (shown for forensic return) -->
+        <div class="form-group" id="return-recipient-box" style="display: none;">
+          <label class="form-label">Return Custody to Primary Case Investigator</label>
+          <div style="background: var(--surface); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); display: flex; align-items: center; gap: 12px;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(14, 165, 233, 0.15); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent);" id="return-recipient-avatar">IV</div>
+            <div style="flex: 1;">
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;" id="return-recipient-name">Inspector Vikram Patel</div>
+              <div style="font-size: 12px; color: var(--text-secondary);" id="return-recipient-meta">investigator@praman.com • Case Investigator</div>
+            </div>
+            <span class="badge badge-info" style="font-size: 11px;">PRIMARY INVESTIGATOR</span>
+          </div>
+        </div>
+
         <div class="form-group">
-          <label class="form-label" for="transfer-remarks">Custodial Transfer Remarks</label>
+          <label class="form-label" id="transfer-remarks-label" for="transfer-remarks">Custodial Transfer Remarks</label>
           <textarea id="transfer-remarks" class="form-control" placeholder="Specify handover purpose, forensic laboratory assignment, or transfer protocol..." rows="3"></textarea>
+        </div>
+
+        <!-- Return Note field (shown for forensic return) -->
+        <div class="form-group" id="return-note-group" style="display: none;">
+          <label class="form-label" for="return-forensic-note">Forensic Analysis Observation / Findings Note</label>
+          <textarea id="return-forensic-note" class="form-control" placeholder="Record technical findings, lab tool versions, integrity verification results to append to evidence dossier..." rows="3"></textarea>
         </div>
       </div>
       <div class="modal-footer">
@@ -256,7 +303,7 @@
   <div class="modal-backdrop" id="modal-court-submit">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3>Submit Evidence for Judicial Court Review</h3>
+        <h3 id="modal-court-title">Submit Evidence for Judicial Court Review</h3>
         <span class="modal-close" id="btn-close-court-submit">&times;</span>
       </div>
       <div class="modal-body">

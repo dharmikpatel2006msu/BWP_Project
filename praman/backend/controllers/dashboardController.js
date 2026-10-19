@@ -34,6 +34,10 @@ const getDashboardStats = async (req, res, next) => {
       failedQuery = failedQuery.neq('courtReviewStatus', 'None');
     }
 
+    const activityPromise = userRole === 'admin'
+      ? supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(6)
+      : Promise.resolve({ data: [] });
+
     const [
       { count: totalEvidence },
       { count: verifiedEvidence },
@@ -50,13 +54,16 @@ const getDashboardStats = async (req, res, next) => {
       failedQuery,
       supabase.from('users').select('*', { count: 'exact', head: true }).eq('isActive', true),
       listQuery.order('createdAt', { ascending: false }).limit(6),
-      supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(6),
+      activityPromise,
       typeQuery,
     ]);
 
     const recentEvidence = await populateUsers(rawRecentEvidence || [], ['uploadedBy', 'currentHolder']);
-    let recentActivity = await populateUsers(rawRecentActivity || [], ['user']);
-    recentActivity = await populateEvidence(recentActivity);
+    let recentActivity = [];
+    if (userRole === 'admin' && rawRecentActivity && rawRecentActivity.length > 0) {
+      recentActivity = await populateUsers(rawRecentActivity, ['user']);
+      recentActivity = await populateEvidence(recentActivity);
+    }
 
     const evidenceByType = {};
     if (typeData) {

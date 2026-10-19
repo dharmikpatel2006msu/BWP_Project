@@ -820,6 +820,15 @@ input, select, textarea {
   text-decoration: none;
 }
 
+.btn:disabled,
+.btn[disabled],
+.btn.disabled-btn {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
 .btn:active {
   transform: scale(0.98);
 }
@@ -1133,6 +1142,27 @@ textarea.form-control {
   overflow: hidden;
   transform: translateY(12px) scale(0.98);
   transition: all var(--transition);
+}
+
+.modal-dialog.modal-dialog-preview {
+  max-width: 980px;
+  width: 94%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-content-box {
+  width: 100%;
+  min-height: 480px;
+  max-height: calc(85vh - 160px);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  border: 1px solid var(--border);
 }
 
 .modal-backdrop.active .modal-dialog {

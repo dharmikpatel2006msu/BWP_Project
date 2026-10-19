@@ -14,12 +14,33 @@
  * 10. Role-based denial tests (Court Officer accessing admin APIs, Unauthorized evidence, etc.)
  */
 
+require('dotenv').config({ path: './backend/.env' });
+const { supabase } = require('../backend/config/db');
+
 const BASE_URL = 'http://localhost:5000/api';
 
 async function runCourtOfficerTests() {
   console.log('========================================================');
   console.log('  RUNNING P.R.A.M.A.N COURT OFFICER TEST SUITE         ');
   console.log('========================================================\n');
+
+  // Setup predictable test state:
+  // EV-2026-0002 -> None (for unauthorized internal scope check)
+  await supabase.from('evidence').update({
+    courtReviewStatus: 'None',
+    courtAssignedTo: null,
+    courtClarificationReason: '',
+    courtReviewedBy: null,
+    courtReviewedAt: null,
+  }).eq('evidenceId', 'EV-2026-0002');
+
+  // EV-2026-0001 -> Pending Court Review (for full court review cycle)
+  await supabase.from('evidence').update({
+    courtReviewStatus: 'Pending Court Review',
+    courtClarificationReason: '',
+    courtReviewedBy: null,
+    courtReviewedAt: null,
+  }).eq('evidenceId', 'EV-2026-0001');
 
   let passed = 0;
   let failed = 0;
@@ -58,35 +79,6 @@ async function runCourtOfficerTests() {
     });
     const invData = await invLoginRes.json();
     const invToken = invData.data.token;
-
-    // Ensure at least 1 evidence item is submitted to court for test suite
-    const evCheckRes = await fetch(`${BASE_URL}/evidence`, {
-      headers: { Authorization: `Bearer ${invToken}` },
-    });
-    const evCheckData = await evCheckRes.json();
-    if (evCheckData.data && evCheckData.data.length > 0) {
-      const courtUserRes = await fetch(`${BASE_URL}/users`, {
-        headers: { Authorization: `Bearer ${courtToken}` },
-      });
-      const courtUserData = await courtUserRes.json();
-      const courtUser = courtUserData.data?.find((u) => u.role === 'court_officer');
-      const targetItem = evCheckData.data[0];
-
-      if (courtUser && targetItem) {
-        await fetch(`${BASE_URL}/custody/transfer`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${invToken}`,
-          },
-          body: JSON.stringify({
-            evidenceId: targetItem._id || targetItem.id,
-            toUserId: courtUser._id || courtUser.id,
-            remarks: 'Submitted for Judicial Court Review',
-          }),
-        });
-      }
-    }
 
     // ---------------------------------------------------------
     // 2. COURT DASHBOARD STATS
@@ -133,7 +125,10 @@ async function runCourtOfficerTests() {
       headers: { Authorization: `Bearer ${invToken}` },
     });
     const allEvData = await allEvRes.json();
-    const internalEvidence = allEvData.data.find((e) => e.evidenceId === 'EV-2026-0002');
+    const courtUserId = loginData.data.user.id || loginData.data.user._id;
+    const internalEvidence = allEvData.data.find(
+      (e) => (e.courtReviewStatus === 'None' || !e.courtReviewStatus) && String(e.currentHolder?.id || e.currentHolder?._id || e.currentHolder) !== String(courtUserId)
+    );
 
     if (internalEvidence) {
       const unauthRes = await fetch(`${BASE_URL}/court/evidence/${internalEvidence._id}`, {
@@ -235,6 +230,73 @@ async function runCourtOfficerTests() {
     );
 
     // ---------------------------------------------------------
+    // 8A. JUDICIAL ACTIONS PAUSED DURING CLARIFICATION
+    // ---------------------------------------------------------
+    // Judge cannot accept while awaiting clarification
+    const acceptWhileClarifying = await fetch(`${BASE_URL}/court/evidence/${courtEvidence._id}/accept`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${courtToken}` },
+    });
+    assert(
+      acceptWhileClarifying.status === 400,
+      'WORKFLOW LOCK: Court accept rejected with 400 while evidence is awaiting clarification'
+    );
+
+    // Judge cannot add court notes while awaiting clarification
+    const noteWhileClarifying = await fetch(`${BASE_URL}/court/evidence/${courtEvidence._id}/notes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${courtToken}`,
+      },
+      body: JSON.stringify({ text: 'Attempting court note during clarification' }),
+    });
+    assert(
+      noteWhileClarifying.status === 400,
+      'WORKFLOW LOCK: Court notes rejected with 400 while evidence is awaiting clarification'
+    );
+
+    // Investigator CAN add notes during clarification to resolve the query
+    const clarNoteRes = await fetch(`${BASE_URL}/evidence/${courtEvidence._id}/notes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${invToken}`,
+      },
+      body: JSON.stringify({ text: 'Certified write-blocker firmware v2.4.1 affidavit attached.' }),
+    });
+    assert(
+      clarNoteRes.status === 200,
+      'WORKFLOW: Investigator can add clarifying forensic note when clarification requested'
+    );
+
+    // Investigator resubmits evidence to court
+    const resubmitRes = await fetch(`${BASE_URL}/court/submit/${courtEvidence._id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${invToken}`,
+      },
+      body: JSON.stringify({ remarks: 'Clarification provided with write-blocker affidavit.' }),
+    });
+    assert(
+      resubmitRes.status === 200,
+      'WORKFLOW: Investigator successfully resubmits evidence to court after clarification'
+    );
+
+    // ---------------------------------------------------------
+    // 8B. PREVIEW EVIDENCE INLINE
+    // ---------------------------------------------------------
+    const previewRes = await fetch(`${BASE_URL}/court/evidence/${courtEvidence._id}/preview`, {
+      headers: { Authorization: `Bearer ${courtToken}` },
+    });
+    const previewDisposition = previewRes.headers.get('content-disposition') || '';
+    assert(
+      previewRes.status === 200 && previewDisposition.includes('inline'),
+      'GET /api/court/evidence/:id/preview serves exhibit file inline for judicial inspection'
+    );
+
+    // ---------------------------------------------------------
     // 9. ACCEPT FOR COURT RECORD
     // ---------------------------------------------------------
     const acceptRes = await fetch(`${BASE_URL}/court/evidence/${courtEvidence._id}/accept`, {
@@ -246,6 +308,62 @@ async function runCourtOfficerTests() {
       acceptRes.status === 200 &&
       acceptData.data.courtReviewStatus === 'Accepted for Court Record',
       'POST /api/court/evidence/:id/accept updates status to Accepted for Court Record'
+    );
+
+    // Duplicate accept attempt must be rejected
+    const dupAcceptRes = await fetch(`${BASE_URL}/court/evidence/${courtEvidence._id}/accept`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${courtToken}` },
+    });
+    assert(
+      dupAcceptRes.status === 400,
+      'IMMUTABILITY: Duplicate accept rejected with 400 once exhibit is in official court record'
+    );
+
+    // Clarification request on accepted evidence must be rejected
+    const clarAfterAccept = await fetch(`${BASE_URL}/court/evidence/${courtEvidence._id}/clarification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${courtToken}`,
+      },
+      body: JSON.stringify({ reason: 'Attempting clarification after acceptance' }),
+    });
+    assert(
+      clarAfterAccept.status === 400,
+      'IMMUTABILITY: Clarification rejected with 400 on accepted court record'
+    );
+
+    // Investigator custody transfer prohibited on accepted court record
+    const blockedTransferAccepted = await fetch(`${BASE_URL}/custody/transfer`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${invToken}`,
+      },
+      body: JSON.stringify({
+        evidenceId: courtEvidence._id,
+        toUserId: courtEvidence.uploadedBy?.id || courtEvidence.uploadedBy,
+        remarks: 'Attempting transfer after acceptance',
+      }),
+    });
+    assert(
+      blockedTransferAccepted.status === 400,
+      'IMMUTABILITY: Custody transfer prohibited on evidence accepted for court record'
+    );
+
+    // Investigator adding notes prohibited on accepted court record
+    const blockedNoteAccepted = await fetch(`${BASE_URL}/evidence/${courtEvidence._id}/notes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${invToken}`,
+      },
+      body: JSON.stringify({ text: 'Attempting note after acceptance' }),
+    });
+    assert(
+      blockedNoteAccepted.status === 400,
+      'IMMUTABILITY: Adding notes prohibited on evidence accepted for court record'
     );
 
     // ---------------------------------------------------------

@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const user = getUser();
   if (!user) return;
 
+  // System Activity Feed is Admin ONLY — remove from DOM for investigator and forensic officer
+  const activityFeedCard = document.getElementById('card-activity-feed');
+  if (user.role !== 'admin' && activityFeedCard) {
+    activityFeedCard.remove();
+  }
+
   // Adapt Header and Top Bar Actions dynamically based on Role
   const titleEl = document.querySelector('.page-title-group h1');
   const subEl = document.querySelector('.page-title-group p');
@@ -132,8 +138,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Render Recent Activity Stream
-    if (recentActivityList && recentActivity) {
+    // Render Recent Activity Stream (Admin ONLY)
+    if (user.role === 'admin' && recentActivityList && recentActivity) {
       if (recentActivity.length === 0) {
         recentActivityList.innerHTML = '<li style="color: var(--text-secondary); font-size: 13px; padding: 12px;">No activity logs recorded.</li>';
       } else {

@@ -74,12 +74,13 @@ const transferEvidence = async (req, res, next) => {
       });
     }
 
-    const { evidenceId, toUserId, remarks } = req.body;
+    const { evidenceId, remarks, noteText } = req.body;
+    let { toUserId } = req.body;
 
-    if (!evidenceId || !toUserId) {
+    if (!evidenceId) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide both evidenceId and target recipient (toUserId).',
+        message: 'Please provide evidenceId.',
       });
     }
 
@@ -91,11 +92,52 @@ const transferEvidence = async (req, res, next) => {
       });
     }
 
+    // If forensic officer is returning custody and toUserId wasn't explicitly supplied, default to evidence.uploadedBy
+    if (!toUserId && req.user.role === 'forensic') {
+      toUserId = evidence.uploadedBy;
+    }
+
+    if (typeof toUserId === 'object' && toUserId) {
+      toUserId = toUserId.id || toUserId._id;
+    }
+
+    if (!toUserId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide target recipient (toUserId).',
+      });
+    }
+
+    // Lock custody transfer while evidence is under judicial court review or accepted into court record
+    // Only activated when judge explicitly requests clarification
+    if (evidence.courtReviewStatus && evidence.courtReviewStatus !== 'None' && evidence.courtReviewStatus !== 'Requires Clarification') {
+      const msg = evidence.courtReviewStatus === 'Accepted for Court Record'
+        ? 'Custody transfer is prohibited: This evidence has been formally accepted into the official court record.'
+        : `Evidence custody transfer is locked while evidence is under active judicial court review (${evidence.courtReviewStatus}).`;
+      return res.status(400).json({
+        success: false,
+        message: msg,
+      });
+    }
+
     const currentUserId = req.user.id || req.user._id;
 
+    // Safely extract IDs for comparison
+    const evidenceHolderId = String(evidence.currentHolder?.id || evidence.currentHolder?._id || evidence.currentHolder || '');
+    const evidenceUploaderId = String(evidence.uploadedBy?.id || evidence.uploadedBy?._id || evidence.uploadedBy || '');
+    const currentUserIdStr = String(currentUserId || '');
+
+    // If forensic officer attempts to return evidence that is already held by investigator
+    if (req.user.role === 'forensic' && evidenceHolderId === evidenceUploaderId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Evidence custody has already been returned to the primary case investigator.',
+      });
+    }
+
     // Role check: Only the current evidence custodian or assigned investigator can transfer
-    const isCurrentHolder = String(evidence.currentHolder) === String(currentUserId);
-    const isUploader = String(evidence.uploadedBy) === String(currentUserId);
+    const isCurrentHolder = Boolean(evidenceHolderId && evidenceHolderId === currentUserIdStr);
+    const isUploader = Boolean(evidenceUploaderId && evidenceUploaderId === currentUserIdStr);
 
     if (!isCurrentHolder && !isUploader) {
       return res.status(403).json({
@@ -118,30 +160,62 @@ const transferEvidence = async (req, res, next) => {
       });
     }
 
-    if (String(recipientUser.id) === String(evidence.currentHolder)) {
+    const isReturningToUploader = String(recipientUser.id) === evidenceUploaderId;
+
+    if (String(recipientUser.id) === evidenceHolderId) {
       return res.status(400).json({
         success: false,
-        message: 'Evidence is already in custody of this user.',
+        message: isReturningToUploader
+          ? 'Evidence custody has already been returned to the primary case investigator.'
+          : 'Evidence is already in custody of this user.',
       });
     }
 
-    const previousHolderId = evidence.currentHolder;
-    const newStatus = evidence.status === 'Uploaded' ? 'Assigned' : evidence.status;
+    const previousHolderId = evidenceHolderId;
+    let newStatus = evidence.status;
+    if (isReturningToUploader) {
+      newStatus = evidence.integrityStatus === 'Verified' ? 'Verified' : 'Uploaded';
+    } else if (evidence.status === 'Uploaded') {
+      newStatus = 'Assigned';
+    }
+
     const now = new Date().toISOString();
+
+    // Append forensic/handover note if provided
+    let updatedNotes = Array.isArray(evidence.notes) ? [...evidence.notes] : [];
+    if (noteText && noteText.trim()) {
+      const returnNote = {
+        text: noteText.trim(),
+        addedBy: currentUserId,
+        addedByName: req.user.name,
+        noteType: req.user.role === 'forensic' ? 'forensic' : 'investigator',
+        addedAt: now,
+      };
+      updatedNotes.push(returnNote);
+    }
+
+    const updatePayload = {
+      currentHolder: recipientUser.id,
+      status: newStatus,
+      updatedAt: now,
+    };
+    if (noteText && noteText.trim()) {
+      updatePayload.notes = updatedNotes;
+    }
 
     // Update evidence current holder and status
     const { data: updatedEvidence } = await supabase
       .from('evidence')
-      .update({
-        currentHolder: recipientUser.id,
-        status: newStatus,
-        updatedAt: now,
-      })
+      .update(updatePayload)
       .eq('id', evidence.id)
       .select('*')
       .single();
 
     const custodyEntryId = crypto.randomUUID();
+    const custodyAction = isReturningToUploader ? 'CUSTODY_RETURNED' : 'TRANSFERRED';
+    const defaultRemarks = isReturningToUploader
+      ? `Custody returned to case investigator ${recipientUser.name}`
+      : `Transferred to ${recipientUser.name} (${recipientUser.role})`;
 
     // Create append-only chain of custody entry
     const { data: custodyEntry } = await supabase
@@ -149,29 +223,45 @@ const transferEvidence = async (req, res, next) => {
       .insert({
         id: custodyEntryId,
         evidence: evidence.id,
-        action: 'TRANSFERRED',
+        action: custodyAction,
         fromUser: previousHolderId,
         toUser: recipientUser.id,
         performedBy: currentUserId,
-        remarks: remarks ? remarks.trim() : `Transferred to ${recipientUser.name} (${recipientUser.role})`,
+        remarks: remarks ? remarks.trim() : defaultRemarks,
         timestamp: now,
       })
       .select('*')
       .single();
+
+    // If note was included during return, record as a separate NOTE_ADDED custody event as well
+    if (noteText && noteText.trim()) {
+      await supabase.from('custody_logs').insert({
+        id: crypto.randomUUID(),
+        evidence: evidence.id,
+        action: 'NOTE_ADDED',
+        performedBy: currentUserId,
+        remarks: `Handover observation: "${noteText.trim().substring(0, 70)}"`,
+        timestamp: now,
+      });
+    }
 
     const populatedLog = await populateUsers(custodyEntry, ['fromUser', 'toUser', 'performedBy']);
 
     // Create Audit Log
     await logAudit({
       req,
-      action: 'EVIDENCE_TRANSFERRED',
+      action: isReturningToUploader ? 'EVIDENCE_CUSTODY_RETURNED' : 'EVIDENCE_TRANSFERRED',
       evidenceId: evidence.id,
-      details: `Custody of ${evidence.evidenceId} transferred from user to ${recipientUser.name} (${recipientUser.role})`,
+      details: isReturningToUploader
+        ? `Evidence ${evidence.evidenceId} custody returned to case investigator ${recipientUser.name} by ${req.user.name}`
+        : `Custody of ${evidence.evidenceId} transferred from user to ${recipientUser.name} (${recipientUser.role})`,
     });
 
     res.status(200).json({
       success: true,
-      message: `Evidence custody successfully transferred to ${recipientUser.name}.`,
+      message: isReturningToUploader
+        ? `Evidence custody successfully returned to case investigator ${recipientUser.name}.`
+        : `Evidence custody successfully transferred to ${recipientUser.name}.`,
       data: {
         evidence: formatRecord(updatedEvidence || evidence),
         custodyRecord: populatedLog,

@@ -116,7 +116,9 @@ async function loadCustodyTimeline(evidenceId) {
             const icon = getActionIcon(item.action);
 
             let metaText = `Logged by <strong>${escapeHtml(item.performedBy?.name || 'System')}</strong> (${item.performedBy?.role || ''})`;
-            if (item.action === 'TRANSFERRED' && item.toUser) {
+            if (item.action === 'CUSTODY_RETURNED' && item.toUser) {
+              metaText = `Custody returned from <strong>${escapeHtml(item.fromUser?.name || 'Forensic Expert')}</strong> back to case investigator <strong>${escapeHtml(item.toUser?.name || 'Investigator')}</strong> (${item.toUser?.role || ''})`;
+            } else if (item.action === 'TRANSFERRED' && item.toUser) {
               metaText = `Transferred from <strong>${escapeHtml(item.fromUser?.name || 'Previous Custodian')}</strong> to <strong>${escapeHtml(item.toUser?.name || 'New Custodian')}</strong> (${item.toUser?.role || ''})`;
             }
 
@@ -155,6 +157,7 @@ function getMarkerClass(action) {
     case 'VERIFIED':
       return 'marker-verify';
     case 'TRANSFERRED':
+    case 'CUSTODY_RETURNED':
       return 'marker-transfer';
     case 'STATUS_CHANGED':
       return 'marker-status';
@@ -178,6 +181,8 @@ function getActionIcon(action) {
       return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>';
     case 'TRANSFERRED':
       return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
+    case 'CUSTODY_RETURNED':
+      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>';
     case 'STATUS_CHANGED':
       return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>';
     case 'NOTE_ADDED':
@@ -200,6 +205,8 @@ function formatActionLabel(action) {
       return 'Cryptographic Integrity Check';
     case 'TRANSFERRED':
       return 'Custody Transfer';
+    case 'CUSTODY_RETURNED':
+      return 'Custody Returned to Investigator';
     case 'STATUS_CHANGED':
       return 'Case Status Modification';
     case 'NOTE_ADDED':
