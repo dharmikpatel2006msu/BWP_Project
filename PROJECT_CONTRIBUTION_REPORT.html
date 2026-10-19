@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P.R.A.M.A.N — Project Contribution Report & Viva Guide</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #3b82f6;
+      --secondary: #0f172a;
+      --accent: #0284c7;
+      --success: #059669;
+      --border: #cbd5e1;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background-color: var(--bg);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Fixed Download Toolbar */
+    .action-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .action-title {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-pdf {
+      background: #ef4444;
+      color: white;
+    }
+    .btn-pdf:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    .btn-word {
+      background: #2563eb;
+      color: white;
+    }
+    .btn-word:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+
+    .btn-md {
+      background: #10b981;
+      color: white;
+    }
+    .btn-md:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+
+    .btn-copy {
+      background: #475569;
+      color: white;
+    }
+    .btn-copy:hover {
+      background: #334155;
+    }
+
+    /* Document Container */
+    .document-page {
+      max-width: 960px;
+      margin: 32px auto 60px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      padding: 48px 56px;
+    }
+
+    /* Institutional Header */
+    .report-header {
+      text-align: center;
+      padding-bottom: 24px;
+      border-bottom: 3px double var(--border);
+      margin-bottom: 32px;
+    }
+
+    .university-badge {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .project-acronym {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: 2px;
+    }
+
+    .project-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .report-title-badge {
+      display: inline-block;
+      margin-top: 14px;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    /* Headings */
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--secondary);
+      margin: 36px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 24px 0 10px;
+    }
+
+    h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 16px 0 6px;
+    }
+
+    p {
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #334155;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-size: 13px;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .badge-percent {
+      background: #dcfce7;
+      color: #15803d;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 12px;
+      display: inline-block;
+    }
+
+    /* Member Card */
+    .member-box {
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      background: #ffffff;
+      page-break-inside: avoid;
+    }
+
+    .member-box.backend {
+      border-left-color: #8b5cf6;
+    }
+
+    .member-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 14px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 10px;
+    }
+
+    .member-role {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .member-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    ul {
+      margin: 8px 0 16px 20px;
+      font-size: 13px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    code {
+      background-color: #f1f5f9;
+      color: #be123c;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 12px;
+    }
+
+    /* Q&A Block */
+    .qa-block {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 12px 0;
+    }
+
+    .qa-q {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .qa-a {
+      font-size: 13px;
+      color: #334155;
+    }
+
+    /* Speaking Script Block */
+    .script-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-style: italic;
+      font-size: 13px;
+      color: #1e40af;
+    }
+
+    /* Signatures */
+    .signature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 36px;
+      page-break-inside: avoid;
+    }
+
+    .sig-block {
+      border-top: 1px solid #94a3b8;
+      padding-top: 8px;
+      font-size: 13px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 2000;
+    }
+
+    /* Print Specific Media */
+    @media print {
+      body {
+        background: #fff;
+      }
+      .action-bar {
+        display: none !important;
+      }
+      .document-page {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+        max-width: 100%;
+      }
+      .member-box {
+        page-break-inside: avoid;
+      }
+      .signature-grid {
+        page-break-inside: avoid;
+      }
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Actions Bar -->
+  <div class="action-bar">
+    <div class="action-title">
+      <span>📄 P.R.A.M.A.N Project Contribution Report</span>
+    </div>
+    <div class="action-buttons">
+      <button class="btn btn-pdf" onclick="window.print()">🖨️ Print / Save as PDF</button>
+      <button class="btn btn-word" onclick="downloadWordDocument()">📥 Download Word (.doc)</button>
+      <button class="btn btn-md" onclick="downloadMarkdownFile()">📝 Download Markdown (.md)</button>
+      <button class="btn btn-copy" onclick="copyDocumentText()">📋 Copy Text</button>
+    </div>
+  </div>
+
+  <div class="document-page" id="printable-report">
+    
+    <!-- Institutional Header -->
+    <div class="report-header">
+      <div class="university-badge">Academic Project Final Report & Viva Voce Dossier</div>
+      <div class="project-acronym">P.R.A.M.A.N</div>
+      <div class="project-subtitle">Portal for Recording and Managing Authentic Nodes<br><strong>Digital Evidence Management & Chain of Custody System</strong></div>
+      <span class="report-title-badge">Equitable Contribution Certification: 25% Per Member</span>
+    </div>
+
+    <!-- Summary Matrix -->
+    <h2>📋 1. Project Contribution Summary Matrix</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Group Member</th>
+          <th>Sub-Team</th>
+          <th>Assigned Role</th>
+          <th>Primary Focus Modules</th>
+          <th>Share</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Member 1</strong> (You)</td>
+          <td>Frontend (25%)</td>
+          <td>UI/UX Lead & Core Portal Engineer</td>
+          <td>Design System (<code>style.css</code>), Auth, Main Dashboard, Evidence Upload & Directory</td>
+          <td><span class="badge-percent">25%</span></td>
+        </tr>
+        <tr>
+          <td><strong>Member 2</strong></td>
+          <td>Frontend (25%)</td>
+          <td>Forensic & Legal UI Engineer</td>
+          <td>Evidence Inspector, Custody Timeline, Court Review Portal & Section 65B Certificate UI</td>
+          <td><span class="badge-percent">25%</span></td>
+        </tr>
+        <tr>
+          <td><strong>Member 3</strong></td>
+          <td>Backend (25%)</td>
+          <td>Core Architecture & Evidence API Engineer</td>
+          <td>Express Server, Supabase DB Schema, JWT Auth, RBAC Middleware & Ingestion Engine</td>
+          <td><span class="badge-percent">25%</span></td>
+        </tr>
+        <tr>
+          <td><strong>Member 4</strong></td>
+          <td>Backend (25%)</td>
+          <td>Cryptography, Audit & Legal API Engineer</td>
+          <td>SHA-256 Stream Hashing, Custody Transfer Engine, Court Officer APIs & XML Generators</td>
+          <td><span class="badge-percent">25%</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Frontend Team Details -->
+    <h2>🎨 2. Frontend Development Team (50% Workshare)</h2>
+    <p>The Frontend Team engineered a zero-dependency, responsive interface using <strong>Vanilla HTML5, Vanilla CSS3 (custom design system), and Modular JavaScript (ES6)</strong>. Third-party CSS frameworks were eliminated to ensure sub-second rendering, prevent supply-chain vulnerabilities, and provide pixel-perfect print adherence for Section 65B certificates.</p>
+
+    <!-- Member 1 -->
+    <div class="member-box">
+      <div class="member-header">
+        <div>
+          <div class="member-role">👤 Member 1: Frontend Developer A (UI/UX Lead & Core Portal Engineer)</div>
+          <div class="member-sub">Work Share: 25% | Focus: Design Tokens, Auth Flow, Main Dashboard, Evidence Ingestion & User Admin</div>
+        </div>
+      </div>
+
+      <h4>Modules & Files Developed</h4>
+      <ul>
+        <li><strong>Design System:</strong> <code>frontend/css/style.css</code> — Built custom dark-mode tokens, glassmorphic card layouts, responsive sidebars, modals, and toast alerts.</li>
+        <li><strong>API Core:</strong> <code>frontend/js/api.js</code> — Centralized <code>apiRequest</code> fetch wrapper with Bearer token injection and auto-401 redirection.</li>
+        <li><strong>Authentication:</strong> <code>frontend/index.html</code> & <code>frontend/js/auth.js</code> — Client-side credential sanitization, JWT handling, and role-based routing.</li>
+        <li><strong>Main Dashboard:</strong> <code>frontend/dashboard.html</code> & <code>frontend/js/dashboard.js</code> — KPI cards (Total Evidence, Pending Verification, Tamper Alerts) and recent evidence stream.</li>
+        <li><strong>Evidence Upload:</strong> <code>frontend/upload.html</code> & <code>frontend/js/upload.js</code> — Drag-and-drop file ingestion with client-side MIME checks and <code>FormData</code> streaming.</li>
+        <li><strong>Evidence Catalog:</strong> <code>frontend/evidence.html</code> & <code>frontend/js/evidence.js</code> — Multi-facet filtering (case number, evidence category, status).</li>
+        <li><strong>User Admin:</strong> <code>frontend/users.html</code> & <code>frontend/js/users.js</code> — Provisioning console to register officers and toggle active states.</li>
+      </ul>
+
+      <h4>Viva Voce Defense Q&A</h4>
+      <div class="qa-block">
+        <div class="qa-q">Q: How do you protect routes across independent HTML pages without a single-page router?</div>
+        <div class="qa-a"><strong>A:</strong> On page initialization, <code>api.js</code> and <code>auth.js</code> verify the signed JWT stored in <code>localStorage</code>. If absent or expired, the user is redirected to <code>index.html</code>. User roles are parsed to restrict unauthorized page access before rendering.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q: How do you handle file uploads in Vanilla JS without data corruption?</div>
+        <div class="qa-a"><strong>A:</strong> Using native <code>FormData</code> streamed as <code>multipart/form-data</code> via <code>fetch</code>, preserving exact raw byte integrity for backend SHA-256 computation.</div>
+      </div>
+
+      <h4>PPT Presentation Pitch</h4>
+      <div class="script-box">
+        "Good morning respected evaluators. As Member 1 and Frontend Lead, I designed our lightweight vanilla design system in style.css, built our centralized API client with JWT authentication, and engineered the core investigator workflows including executive dashboard metrics and drag-and-drop evidence ingestion."
+      </div>
+    </div>
+
+    <!-- Member 2 -->
+    <div class="member-box">
+      <div class="member-header">
+        <div>
+          <div class="member-role">👤 Member 2: Frontend Developer B (Forensic & Legal UI Engineer)</div>
+          <div class="member-sub">Work Share: 25% | Focus: Tamper Verification UI, Custody Timeline, Court Review Portal & Section 65B Print Engine</div>
+        </div>
+      </div>
+
+      <h4>Modules & Files Developed</h4>
+      <ul>
+        <li><strong>Evidence Deep Inspector:</strong> <code>frontend/evidence-details.html</code> & <code>frontend/js/evidence-details.js</code> — Live re-hash trigger, visual tamper badges (Match: Green / Tampered: Red), and file preview modals.</li>
+        <li><strong>Custody Timeline:</strong> <code>frontend/custody.html</code> & <code>frontend/js/custody.js</code> — Chronological custody timeline nodes and modal dialog for transferring evidence.</li>
+        <li><strong>Court Officer Portal:</strong> <code>court-dashboard.html</code>, <code>court-evidence.html</code>, <code>court-review.html</code>, and <code>court-activity.html</code> — Judicial docket review, acceptance/clarification status toggles, and judicial remarks.</li>
+        <li><strong>Section 65B Print Generator:</strong> <code>frontend/court-report.html</code> & <code>frontend/js/court-report.js</code> — Court admissibility dossier with <code>@media print</code> formatting and official judicial seal.</li>
+        <li><strong>Tamper Audit Logs:</strong> <code>frontend/audit.html</code> & <code>frontend/js/audit.js</code> — Security audit trail viewer with XML export trigger.</li>
+      </ul>
+
+      <h4>Viva Voce Defense Q&A</h4>
+      <div class="qa-block">
+        <div class="qa-q">Q: What is the purpose of the Section 65B certificate?</div>
+        <div class="qa-a"><strong>A:</strong> Under Indian Evidence Law, digital evidence is admissible in court only if certified regarding electronic integrity and device custody. Our page dynamically produces this compliant certification.</div>
+      </div>
+
+      <h4>PPT Presentation Pitch</h4>
+      <div class="script-box">
+        "Hello panel. As Member 2, I engineered the forensic inspection and judicial review modules. I developed the real-time hash verification UI for tamper detection, built the chronological Chain of Custody timeline, and implemented the automated Section 65B certificate generator formatted specifically for court print submission."
+      </div>
+    </div>
+
+    <!-- Backend Team Details -->
+    <h2>⚙️ 3. Backend Development Team (50% Workshare)</h2>
+    <p>The Backend Team architected an enterprise REST API on <strong>Node.js, Express.js, Supabase (PostgreSQL), Multer, and Node Crypto</strong>, providing strict RBAC authorization, streaming SHA-256 hashing, immutable custody auditing, and XML reporting.</p>
+
+    <!-- Member 3 -->
+    <div class="member-box backend">
+      <div class="member-header">
+        <div>
+          <div class="member-role">👤 Member 3: Backend Developer A (Core Architecture, Security & Ingestion Engineer)</div>
+          <div class="member-sub">Work Share: 25% | Focus: Server Setup, Supabase Schema, JWT Auth, RBAC Middleware & Multer Ingestion Engine</div>
+        </div>
+      </div>
+
+      <h4>Modules & Files Developed</h4>
+      <ul>
+        <li><strong>Server Infrastructure:</strong> <code>backend/server.js</code> — Express server pipeline, CORS, body parsers, static file serving, and centralized error handling.</li>
+        <li><strong>Relational DB Schema:</strong> <code>backend/config/db.js</code> & <code>backend/models/schema.sql</code> — PostgreSQL tables for <code>users</code>, <code>evidence</code>, <code>custody_logs</code>, and <code>audit_logs</code> with foreign key constraints.</li>
+        <li><strong>Auth & RBAC Middleware:</strong> <code>authMiddleware.js</code>, <code>roleMiddleware.js</code>, <code>authController.js</code>, and <code>authRoutes.js</code> — Bearer JWT validation, <code>bcryptjs</code> salted password hashing, and role guard enforcement.</li>
+        <li><strong>Evidence Upload Engine:</strong> <code>uploadMiddleware.js</code>, <code>generateEvidenceId.js</code>, <code>evidenceController.js</code>, and <code>evidenceRoutes.js</code> — Multer file storage, unique ID generator (<code>EVD-2026-XXXX</code>), and ingestion validation.</li>
+        <li><strong>User Subsystem & Seeding:</strong> <code>userController.js</code>, <code>userRoutes.js</code>, <code>scripts/seed.js</code>, and <code>seedDefaults.js</code> — User administration endpoints and automated demo database seeders.</li>
+      </ul>
+
+      <h4>Viva Voce Defense Q&A</h4>
+      <div class="qa-block">
+        <div class="qa-q">Q: Why did you choose PostgreSQL over MongoDB?</div>
+        <div class="qa-a"><strong>A:</strong> Digital evidence requires strict ACID guarantees and foreign key referential integrity so that custody records can never be orphaned or modified without audit traces.</div>
+      </div>
+
+      <h4>PPT Presentation Pitch</h4>
+      <div class="script-box">
+        "Respected evaluators, as Member 3, I developed our backend server infrastructure, relational Supabase database schema, and security architecture. I implemented salted password hashing with bcrypt, built our role-based authorization middleware, and developed the secure Multer evidence ingestion subsystem."
+      </div>
+    </div>
+
+    <!-- Member 4 -->
+    <div class="member-box backend">
+      <div class="member-header">
+        <div>
+          <div class="member-role">👤 Member 4: Backend Developer B (Cryptography, Custody State Machine & Legal Compliance)</div>
+          <div class="member-sub">Work Share: 25% | Focus: SHA-256 Stream Hashing, Custody Transfer Engine, Court Officer APIs & XML Generators</div>
+        </div>
+      </div>
+
+      <h4>Modules & Files Developed</h4>
+      <ul>
+        <li><strong>Cryptographic Stream Engine:</strong> <code>backend/utils/hashFile.js</code> — Memory-efficient SHA-256 computation using <code>crypto.createHash('sha256')</code> and Node <code>fs.createReadStream</code>.</li>
+        <li><strong>Tamper Verification Endpoints:</strong> <code>verifyEvidence</code> and <code>verifyCourtEvidence</code> in <code>evidenceController.js</code> & <code>courtController.js</code> — Disk-level re-hashing and automated integrity status updates.</li>
+        <li><strong>Chain of Custody Engine:</strong> <code>custodyController.js</code> & <code>custodyRoutes.js</code> — Custody transfer verification ensuring only current custodians can transfer evidence.</li>
+        <li><strong>Court Officer Subsystem:</strong> <code>courtController.js</code> & <code>courtRoutes.js</code> — Evidence court docket submission, judicial reviews, and court metrics.</li>
+        <li><strong>Section 65B XML Generator:</strong> <code>exportCourtCertificateXml</code> (using <code>xmlbuilder2</code>) and <code>getCourtEvidenceReport</code> — Machine-readable e-Court certificates.</li>
+        <li><strong>Security Audit Subsystem:</strong> <code>auditController.js</code>, <code>auditRoutes.js</code>, and <code>auditLogger.js</code> — Centralized asynchronous audit logging and XML export.</li>
+      </ul>
+
+      <h4>Viva Voce Defense Q&A</h4>
+      <div class="qa-block">
+        <div class="qa-q">Q: Why use stream hashing instead of readFileSync?</div>
+        <div class="qa-a"><strong>A:</strong> <code>readFileSync</code> loads whole files into RAM, causing memory crashes on large forensic files (e.g. video files over 100MB). Streams process data in sequential 64KB chunks with constant, low RAM usage.</div>
+      </div>
+
+      <h4>PPT Presentation Pitch</h4>
+      <div class="script-box">
+        "Good morning. As Member 4, I engineered the cryptographic hashing engine and judicial compliance features. I built memory-efficient SHA-256 stream hashing for instantaneous tamper detection, created the atomic Chain of Custody transfer API, and developed automated Section 65B XML generators for e-Court integration."
+      </div>
+    </div>
+
+    <!-- Traceability Matrix -->
+    <h2>📊 4. Feature-to-Member Traceability Matrix</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Project Feature</th>
+          <th>Frontend Owner</th>
+          <th>Backend Owner</th>
+          <th>Primary Files</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Authentication & RBAC</td>
+          <td>Member 1</td>
+          <td>Member 3</td>
+          <td><code>auth.js</code>, <code>authController.js</code>, <code>roleMiddleware.js</code></td>
+        </tr>
+        <tr>
+          <td>Evidence Ingestion & Validation</td>
+          <td>Member 1</td>
+          <td>Member 3</td>
+          <td><code>upload.html</code>, <code>upload.js</code>, <code>evidenceController.js</code></td>
+        </tr>
+        <tr>
+          <td>Evidence Catalog & Search</td>
+          <td>Member 1</td>
+          <td>Member 3</td>
+          <td><code>evidence.html</code>, <code>evidence.js</code>, <code>evidenceRoutes.js</code></td>
+        </tr>
+        <tr>
+          <td>User Administration</td>
+          <td>Member 1</td>
+          <td>Member 3</td>
+          <td><code>users.html</code>, <code>users.js</code>, <code>userController.js</code></td>
+        </tr>
+        <tr>
+          <td>SHA-256 Hash Integrity Check</td>
+          <td>Member 2</td>
+          <td>Member 4</td>
+          <td><code>evidence-details.js</code>, <code>hashFile.js</code>, <code>courtController.js</code></td>
+        </tr>
+        <tr>
+          <td>Chain of Custody Tracking</td>
+          <td>Member 2</td>
+          <td>Member 4</td>
+          <td><code>custody.html</code>, <code>custody.js</code>, <code>custodyController.js</code></td>
+        </tr>
+        <tr>
+          <td>Judicial Docket & Review</td>
+          <td>Member 2</td>
+          <td>Member 4</td>
+          <td><code>court-review.js</code>, <code>courtController.js</code></td>
+        </tr>
+        <tr>
+          <td>Section 65B Legal Certificate</td>
+          <td>Member 2</td>
+          <td>Member 4</td>
+          <td><code>court-report.html</code>, <code>courtController.js</code> (xmlbuilder2)</td>
+        </tr>
+        <tr>
+          <td>Security Audit Logs & XML Export</td>
+          <td>Member 2</td>
+          <td>Member 4</td>
+          <td><code>audit.html</code>, <code>audit.js</code>, <code>auditLogger.js</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- University Certificate -->
+    <h2>✍️ 5. Certificate of Equal Contribution</h2>
+    <p>We, the undersigned group members for the project entitled <strong>"P.R.A.M.A.N (Portal for Recording and Managing Authentic Nodes)"</strong>, hereby confirm that the system was collaboratively designed, architected, and implemented in two balanced sub-teams (Frontend & Backend). The distribution of technical responsibilities and individual contributions is certified as an equal 25% per member.</p>
+
+    <div class="signature-grid">
+      <div class="sig-block">
+        <strong>1. Member 1 (Frontend Lead - 25%)</strong><br>
+        Name: _______________________________<br>
+        Roll No: ____________________________<br>
+        Signature: __________________________
+      </div>
+      <div class="sig-block">
+        <strong>2. Member 2 (Frontend Legal UI - 25%)</strong><br>
+        Name: _______________________________<br>
+        Roll No: ____________________________<br>
+        Signature: __________________________
+      </div>
+      <div class="sig-block">
+        <strong>3. Member 3 (Backend Architecture - 25%)</strong><br>
+        Name: _______________________________<br>
+        Roll No: ____________________________<br>
+        Signature: __________________________
+      </div>
+      <div class="sig-block">
+        <strong>4. Member 4 (Backend Cryptography - 25%)</strong><br>
+        Name: _______________________________<br>
+        Roll No: ____________________________<br>
+        Signature: __________________________
+      </div>
+    </div>
+
+    <div style="margin-top: 40px; border-top: 2px solid #0f172a; padding-top: 12px; display: flex; justify-content: space-between; font-size: 13px;">
+      <div>
+        <strong>Project Guide / Faculty Advisor:</strong> ____________________________<br>
+        Department of Computer Science & Engineering
+      </div>
+      <div>
+        <strong>Date:</strong> ____________________________<br>
+        <strong>Institutional Seal:</strong> [ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast" class="toast">Action completed!</div>
+
+  <script>
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3000);
+    }
+
+    function downloadMarkdownFile() {
+      // Direct download of the existing PROJECT_CONTRIBUTION_REPORT.md
+      const link = document.createElement('a');
+      link.href = 'PROJECT_CONTRIBUTION_REPORT.md';
+      link.download = 'PRAMAN_Project_Contribution_Report.md';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Downloading Markdown file...');
+    }
+
+    function downloadWordDocument() {
+      const content = document.getElementById('printable-report').innerHTML;
+      const header = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+              xmlns:w='urn:schemas-microsoft-com:office:word' 
+              xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset='utf-8'>
+          <title>P.R.A.M.A.N Project Contribution Report</title>
+          <style>
+            body { font-family: 'Calibri', Arial, sans-serif; font-size: 11pt; color: #1e293b; line-height: 1.5; }
+            h1, h2, h3 { color: #1e3a8a; }
+            table { border-collapse: collapse; width: 100%; margin: 12pt 0; }
+            th, td { border: 1px solid #94a3b8; padding: 6pt 8pt; font-size: 10pt; }
+            th { background-color: #f1f5f9; }
+            .member-box { border: 1px solid #cbd5e1; padding: 10pt; margin-bottom: 14pt; }
+            .badge-percent { font-weight: bold; color: #15803d; }
+            code { font-family: Consolas, monospace; background: #f1f5f9; color: #be123c; }
+          </style>
+        </head>
+        <body>
+      `;
+      const footer = "</body></html>";
+      const sourceHTML = header + content + footer;
+
+      const blob = new Blob(['\ufeff', sourceHTML], {
+        type: 'application/msword'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'PRAMAN_Project_Contribution_Report.doc';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Downloading Word document (.doc)...');
+    }
+
+    function copyDocumentText() {
+      const el = document.getElementById('printable-report');
+      navigator.clipboard.writeText(el.innerText).then(() => {
+        showToast('Document text copied to clipboard!');
+      }).catch(err => {
+        alert('Could not copy text: ' + err);
+      });
+    }
+  </script>
+</body>
+</html>

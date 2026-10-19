@@ -26,9 +26,25 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Prevent browser from caching authenticated HTML pages in history (disables bfcache)
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 // Serve frontend static assets directly (Single-server convenience for college demo)
 const frontendDir = path.join(__dirname, '../frontend');
-app.use(express.static(frontendDir));
+app.use(express.static(frontendDir, {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+}));
 
 // Mount REST API endpoints
 app.use('/api/auth', authRoutes);
