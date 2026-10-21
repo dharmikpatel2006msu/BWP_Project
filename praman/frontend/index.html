@@ -66,9 +66,9 @@
           localStorage.setItem('praman_user', JSON.stringify(res.data.user));
           
           if (res.data.user.role === 'court_officer') {
-            window.location.replace('court-dashboard.html');
+            window.location.href = 'court-dashboard.html';
           } else {
-            window.location.replace('dashboard.html');
+            window.location.href = 'dashboard.html';
           }
         }
       } catch (err) {
@@ -86,32 +86,15 @@
       performLogin(email, pass);
     }
 
-    // Prevent browser back-button from returning to previously authenticated cached pages
-    window.addEventListener('pageshow', function (event) {
-      if (!isAuthenticated()) {
-        localStorage.removeItem('praman_token');
-        localStorage.removeItem('praman_user');
-        sessionStorage.clear();
-      }
-    });
-
-    // History trap: lock the login page so clicking the browser Back button remains on the login page
-    if (window.history && window.history.pushState) {
-      window.history.pushState(null, null, window.location.href);
-      window.onpopstate = function () {
-        window.history.pushState(null, null, window.location.href);
-      };
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
       // If already logged in, redirect to inner dashboard
       const token = localStorage.getItem('praman_token');
       const user = getUser();
       if (token && user) {
         if (user.role === 'court_officer') {
-          window.location.replace('court-dashboard.html');
+          window.location.href = 'court-dashboard.html';
         } else {
-          window.location.replace('dashboard.html');
+          window.location.href = 'dashboard.html';
         }
         return;
       }
