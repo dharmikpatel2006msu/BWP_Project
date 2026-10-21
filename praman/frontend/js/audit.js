@@ -6,7 +6,7 @@ let currentAuditPage = 1;
 const auditLimit = 15;
 
 document.addEventListener('DOMContentLoaded', () => {
-  requireAuth(['admin']);
+  requireAuth(['admin', 'forensic']);
 
   const actionFilter = document.getElementById('filter-audit-action');
   const btnExportXml = document.getElementById('btn-export-xml');

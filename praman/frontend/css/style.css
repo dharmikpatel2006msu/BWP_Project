@@ -203,7 +203,8 @@ input, select, textarea {
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 10px 14px;
+  gap: 12px;
+  padding: 11px 14px;
   margin-bottom: 5px;
   border-radius: var(--radius-sm);
   font-size: 13.5px;
@@ -226,25 +227,12 @@ input, select, textarea {
 }
 
 .nav-icon {
-  display: none !important;
-}
-
-.brand-icon-svg {
-  display: inline-block;
-  vertical-align: -3px;
-  color: var(--cyan);
-  flex-shrink: 0;
-}
-
-.sidebar-title {
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--white);
-  margin-bottom: 4px;
+  justify-content: center;
+  font-size: 16px;
 }
 
 .sidebar-footer {
@@ -652,12 +640,6 @@ input, select, textarea {
   transition: transform 200ms ease;
 }
 
-.stat-icon svg {
-  width: 24px;
-  height: 24px;
-  stroke-width: 2;
-}
-
 .stat-card:hover .stat-icon {
   transform: scale(1.06);
 }
@@ -818,15 +800,6 @@ input, select, textarea {
   font-weight: 600;
   transition: all var(--transition);
   text-decoration: none;
-}
-
-.btn:disabled,
-.btn[disabled],
-.btn.disabled-btn {
-  opacity: 0.5;
-  cursor: not-allowed !important;
-  box-shadow: none !important;
-  transform: none !important;
 }
 
 .btn:active {
@@ -1142,27 +1115,6 @@ textarea.form-control {
   overflow: hidden;
   transform: translateY(12px) scale(0.98);
   transition: all var(--transition);
-}
-
-.modal-dialog.modal-dialog-preview {
-  max-width: 980px;
-  width: 94%;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.preview-content-box {
-  width: 100%;
-  min-height: 480px;
-  max-height: calc(85vh - 160px);
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-  border: 1px solid var(--border);
 }
 
 .modal-backdrop.active .modal-dialog {

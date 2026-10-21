@@ -8,12 +8,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const user = getUser();
   if (!user) return;
 
-  // System Activity Feed is Admin ONLY — remove from DOM for investigator and forensic officer
-  const activityFeedCard = document.getElementById('card-activity-feed');
-  if (user.role !== 'admin' && activityFeedCard) {
-    activityFeedCard.remove();
-  }
-
   // Adapt Header and Top Bar Actions dynamically based on Role
   const titleEl = document.querySelector('.page-title-group h1');
   const subEl = document.querySelector('.page-title-group p');
@@ -26,10 +20,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (actionContainer) {
       actionContainer.innerHTML = `
         <a href="users.html" class="btn btn-primary btn-sm">
-          User Management
+          <span>👥</span> User Management
         </a>
         <a href="audit.html" class="btn btn-secondary btn-sm" style="margin-left: 8px;">
-          System Audit Logs
+          <span>📜</span> System Audit Logs
         </a>
       `;
     }
@@ -40,7 +34,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (actionContainer) {
       actionContainer.innerHTML = `
         <a href="evidence.html" class="btn btn-primary btn-sm">
-          Open Evidence Vault
+          <span>📁</span> Open Evidence Vault
+        </a>
+        <a href="audit.html" class="btn btn-secondary btn-sm" style="margin-left: 8px;">
+          <span>📜</span> Inspect Audit Logs
         </a>
       `;
     }
@@ -51,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (actionContainer) {
       actionContainer.innerHTML = `
         <a href="upload.html" class="btn btn-primary btn-sm">
-          + Ingest Evidence
+          <span>+</span> Ingest Evidence
         </a>
       `;
     }
@@ -138,8 +135,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Render Recent Activity Stream (Admin ONLY)
-    if (user.role === 'admin' && recentActivityList && recentActivity) {
+    // Render Recent Activity Stream
+    if (recentActivityList && recentActivity) {
       if (recentActivity.length === 0) {
         recentActivityList.innerHTML = '<li style="color: var(--text-secondary); font-size: 13px; padding: 12px;">No activity logs recorded.</li>';
       } else {

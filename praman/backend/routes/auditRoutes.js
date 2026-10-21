@@ -5,9 +5,9 @@ const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
 
 // XML export endpoint (Must come before /:id routes if any)
-router.get('/export/xml', protect, authorize('admin'), exportAuditLogsXml);
+router.get('/export/xml', protect, authorize('admin', 'forensic'), exportAuditLogsXml);
 
 // Audit logs list
-router.get('/', protect, authorize('admin'), getAuditLogs);
+router.get('/', protect, authorize('admin', 'forensic'), getAuditLogs);
 
 module.exports = router;

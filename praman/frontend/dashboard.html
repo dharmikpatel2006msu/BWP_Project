@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,8 +8,11 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
 
   <div class="app-shell">
@@ -17,8 +21,7 @@
       <div class="sidebar-header">
         <span class="brand-badge">Forensic Integrity</span>
         <div class="sidebar-title">
-          <svg class="brand-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-          <span>P.R.A.M.A.N</span>
+          <span>🛡️</span> P.R.A.M.A.N
         </div>
         <div class="sidebar-subtitle">Portal for Recording and Managing Authentic Nodes</div>
       </div>
@@ -26,40 +29,51 @@
       <nav class="sidebar-nav">
         <div class="nav-section-title">Evidence Workspace</div>
         <a href="dashboard.html" class="nav-item active">
+          <span class="nav-icon">📊</span>
           <span>Dashboard</span>
         </a>
         <a href="evidence.html" class="nav-item">
+          <span class="nav-icon">📁</span>
           <span>Evidence Vault</span>
         </a>
         <a href="upload.html" id="nav-upload" class="nav-item">
+          <span class="nav-icon">📤</span>
           <span>Upload Evidence</span>
         </a>
         <a href="custody.html" class="nav-item">
+          <span class="nav-icon">⛓️</span>
           <span>Chain of Custody</span>
         </a>
 
         <div class="nav-section-title court-nav-item" style="display: none;">Judicial Proceedings</div>
         <a href="court-dashboard.html" class="nav-item court-nav-item" style="display: none;">
+          <span class="nav-icon">⚖️</span>
           <span>Court Dashboard</span>
         </a>
         <a href="court-evidence.html" class="nav-item court-nav-item" style="display: none;">
+          <span class="nav-icon">📜</span>
           <span>Court Evidence</span>
         </a>
         <a href="court-review.html" class="nav-item court-nav-item" style="display: none;">
+          <span class="nav-icon">🔍</span>
           <span>Court Review</span>
         </a>
         <a href="court-report.html" class="nav-item court-nav-item" style="display: none;">
+          <span class="nav-icon">🖨️</span>
           <span>Court Reports</span>
         </a>
         <a href="court-activity.html" class="nav-item court-nav-item" style="display: none;">
+          <span class="nav-icon">⚡</span>
           <span>Court Activity</span>
         </a>
 
         <div class="nav-section-title" id="admin-section-title">Administration</div>
         <a href="audit.html" id="nav-audit" class="nav-item">
+          <span class="nav-icon">📜</span>
           <span>Audit Logs</span>
         </a>
         <a href="users.html" id="nav-users" class="nav-item">
+          <span class="nav-icon">👥</span>
           <span>User Management</span>
         </a>
       </nav>
@@ -73,7 +87,7 @@
           </div>
         </div>
         <button id="btn-logout" class="btn-logout">
-          Sign Out
+          <span>🚪</span> Sign Out
         </button>
       </div>
     </aside>
@@ -99,9 +113,7 @@
         <!-- Top Stats Cards -->
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon stat-icon-blue">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
-            </div>
+            <div class="stat-icon stat-icon-blue">📁</div>
             <div class="stat-content">
               <div class="stat-label">Total Evidence</div>
               <div class="stat-value" id="stat-total">0</div>
@@ -109,9 +121,7 @@
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon stat-icon-green">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-            </div>
+            <div class="stat-icon stat-icon-green">🛡️</div>
             <div class="stat-content">
               <div class="stat-label">Verified Integrity</div>
               <div class="stat-value" id="stat-verified">0</div>
@@ -119,9 +129,7 @@
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon stat-icon-orange">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </div>
+            <div class="stat-icon stat-icon-orange">⏳</div>
             <div class="stat-content">
               <div class="stat-label">Pending Verification</div>
               <div class="stat-value" id="stat-pending">0</div>
@@ -129,9 +137,7 @@
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon stat-icon-red">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            </div>
+            <div class="stat-icon stat-icon-red">⚠️</div>
             <div class="stat-content">
               <div class="stat-label">Failed Integrity</div>
               <div class="stat-value" id="stat-failed">0</div>
@@ -145,7 +151,7 @@
           <div class="card" style="margin-bottom: 0;">
             <div class="card-header">
               <div class="card-title">
-                Recently Ingested Evidence
+                <span>📁</span> Recently Ingested Evidence
               </div>
               <a href="evidence.html" class="btn btn-secondary btn-sm">View Vault</a>
             </div>
@@ -165,7 +171,8 @@
                 </thead>
                 <tbody id="recent-evidence-tbody">
                   <tr>
-                    <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-secondary);">Loading records...</td>
+                    <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-secondary);">Loading
+                      records...</td>
                   </tr>
                 </tbody>
               </table>
@@ -178,7 +185,7 @@
             <div class="card">
               <div class="card-header">
                 <div class="card-title">
-                  Evidence by Type
+                  <span>📊</span> Evidence by Type
                 </div>
               </div>
               <div id="type-distribution">
@@ -186,11 +193,11 @@
               </div>
             </div>
 
-            <!-- Recent Activity Card (Admin Only) -->
-            <div class="card" id="card-activity-feed">
+            <!-- Recent Activity Card -->
+            <div class="card">
               <div class="card-header">
                 <div class="card-title">
-                  System Activity Feed
+                  <span>⚡</span> System Activity Feed
                 </div>
               </div>
               <ul id="recent-activity-list" style="list-style: none;">
@@ -208,4 +215,5 @@
   <script src="js/auth.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
+
 </html>
