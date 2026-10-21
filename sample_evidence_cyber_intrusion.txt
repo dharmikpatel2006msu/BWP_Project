@@ -1,0 +1,32 @@
+================================================================================
+P.R.A.M.A.N DIGITAL FORENSICS DIVISION — SEIZED EVIDENCE EXHIBIT
+================================================================================
+CASE DOCKET NUMBER  : CR-2026-9042
+SEIZURE INCIDENT    : Unauthorized Database Exfiltration & Gateway Breach
+SEIZURE LOCATION    : Core Financial Gateway Switch (Rack 04 - Unit 12)
+INVESTIGATION LEAD  : Inspector Vikram Patel (Badge #IND-CYBER-884)
+ACQUISITION METHOD  : Direct Bitstream Raw Memory & Syslog Capture (Write-Blocker Enforced)
+DATE OF SEIZURE     : 2026-10-21 09:45:00 UTC
+TARGET MACHINE IP   : 192.168.10.45 [Subnet: DMZ-FIN-NET]
+MAC ADDRESS         : 00:1A:2B:3C:4D:5E
+
+================================================================================
+SYSTEM LOG TRANSCRIPT / SECURITY ALERT JOURNAL:
+================================================================================
+[2026-10-21 09:31:04 UTC] [ALERT-LEVEL-HIGH] SSH Brute-Force Authentication Attempt from External IP: 198.51.100.74 (Port: 44921)
+[2026-10-21 09:32:18 UTC] [ALERT-LEVEL-CRIT] User 'db_admin_svc' logged in with valid token following 14 failed attempts.
+[2026-10-21 09:33:02 UTC] [PRIVILEGE_ESCALATION] Sudo override invoked via script '/tmp/.hidden_exploit/payload.sh' (PID: 9024)
+[2026-10-21 09:35:10 UTC] [DATABASE_QUERY] SELECT * FROM customer_transactions WHERE amount > 1000000 INTO OUTFILE '/tmp/dump_oct2026.csv';
+[2026-10-21 09:38:44 UTC] [EXFILTRATION_DETECTED] Outbound TLS tunnel established to 203.0.113.88:8443 (Transferred: 48.7 MB)
+[2026-10-21 09:41:00 UTC] [ALERT] Local audit daemon shutdown signal sent by PID: 9024.
+[2026-10-21 09:42:15 UTC] [INCIDENT_RESPONSE] Network isolation switch activated by Cyber Security Operations Center (SOC).
+[2026-10-21 09:45:00 UTC] [FORENSIC_CAPTURE] Raw system journal dump captured to non-volatile storage. Hardware write-blocker active.
+
+================================================================================
+CHAIN OF CUSTODY INTEGRITY NOTICE:
+================================================================================
+This exhibit is prepared for ingestion into the P.R.A.M.A.N Portal for Recording 
+and Managing Authentic Nodes. Upon upload, a streaming SHA-256 cryptographic 
+hash will be computed to guarantee tamper-proof integrity in compliance with 
+Section 65B of the Indian Evidence Act.
+================================================================================
