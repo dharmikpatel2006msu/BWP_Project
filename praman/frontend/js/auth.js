@@ -16,54 +16,19 @@ function getUser() {
 }
 
 function isAuthenticated() {
-  const token = getToken();
-  const user = getUser();
-  return !!(token && user);
+  return !!getToken();
 }
-
-// 1. Instant security check when script executes
-(function checkImmediateAuth() {
-  const currentFile = window.location.pathname.split('/').pop() || 'index.html';
-  const isPublic = currentFile === 'index.html' || currentFile === '' || currentFile === 'contribution-report.html';
-  if (!isPublic && !isAuthenticated()) {
-    if (document.documentElement) {
-      document.documentElement.innerHTML = '';
-    }
-    window.location.replace('index.html');
-  }
-})();
-
-// 2. Back-Forward Cache (bfcache) Guard — fires when user presses browser Back/Forward buttons
-window.addEventListener('pageshow', function (event) {
-  const currentFile = window.location.pathname.split('/').pop() || 'index.html';
-  const isPublic = currentFile === 'index.html' || currentFile === '' || currentFile === 'contribution-report.html';
-  if (!isPublic) {
-    if (!isAuthenticated()) {
-      if (document.documentElement) {
-        document.documentElement.innerHTML = '';
-      }
-      window.location.replace('index.html');
-      return;
-    }
-  }
-});
 
 // Guard page access based on user role
 function requireAuth(allowedRoles = []) {
   if (!isAuthenticated()) {
-    if (document.documentElement) {
-      document.documentElement.innerHTML = '';
-    }
-    window.location.replace('index.html');
+    window.location.href = 'index.html';
     return;
   }
 
   const user = getUser();
   if (!user) {
-    if (document.documentElement) {
-      document.documentElement.innerHTML = '';
-    }
-    window.location.replace('index.html');
+    window.location.href = 'index.html';
     return;
   }
 
@@ -81,14 +46,14 @@ function requireAuth(allowedRoles = []) {
       'evidence-details.html',
     ];
     if (!courtAllowedPages.includes(currentFile) && currentFile !== '') {
-      window.location.replace('court-dashboard.html');
+      window.location.href = 'court-dashboard.html';
       return;
     }
   }
 
   // 2. Non-Court Roles Blocked from Court Pages (Except Admin)
   if (user.role !== 'court_officer' && user.role !== 'admin' && currentFile.startsWith('court-')) {
-    window.location.replace('dashboard.html');
+    window.location.href = 'dashboard.html';
     return;
   }
 
@@ -97,7 +62,7 @@ function requireAuth(allowedRoles = []) {
     const invAllowedPages = ['dashboard.html', 'evidence.html', 'upload.html', 'custody.html', 'evidence-details.html', ''];
     if (!invAllowedPages.includes(currentFile)) {
       alert(`Access Denied: 'Investigator' role is not authorized to access ${currentFile}`);
-      window.location.replace('dashboard.html');
+      window.location.href = 'dashboard.html';
       return;
     }
   }
@@ -107,7 +72,7 @@ function requireAuth(allowedRoles = []) {
     const forensicAllowedPages = ['dashboard.html', 'evidence.html', 'custody.html', 'evidence-details.html', ''];
     if (!forensicAllowedPages.includes(currentFile)) {
       alert(`Access Denied: 'Forensic Expert' role is not authorized to access ${currentFile}`);
-      window.location.replace('dashboard.html');
+      window.location.href = 'dashboard.html';
       return;
     }
   }
@@ -115,7 +80,7 @@ function requireAuth(allowedRoles = []) {
   // 5. System Admin Role Protection (Observer only: zero access to evidence ingestion)
   if (user.role === 'admin' && currentFile === 'upload.html') {
     alert(`Access Denied: System Admin is an observer for governance and cannot ingest or upload evidence files.`);
-    window.location.replace('dashboard.html');
+    window.location.href = 'dashboard.html';
     return;
   }
 
@@ -123,9 +88,9 @@ function requireAuth(allowedRoles = []) {
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
     alert(`Access Denied: '${user.role}' role is not authorized to view this page.`);
     if (user.role === 'court_officer') {
-      window.location.replace('court-dashboard.html');
+      window.location.href = 'court-dashboard.html';
     } else {
-      window.location.replace('dashboard.html');
+      window.location.href = 'dashboard.html';
     }
   }
 }
@@ -141,9 +106,7 @@ async function handleLogout() {
   } finally {
     localStorage.removeItem('praman_token');
     localStorage.removeItem('praman_user');
-    sessionStorage.clear();
-    // Use replace to overwrite browser history so clicking Back cannot navigate into protected pages
-    window.location.replace('index.html');
+    window.location.href = 'index.html';
   }
 }
 
