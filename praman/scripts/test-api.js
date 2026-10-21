@@ -3,12 +3,23 @@
  * Validates authentication, upload, verification, chain of custody, and XML export.
  */
 
+require('dotenv').config({ path: './backend/.env' });
+const { supabase } = require('../backend/config/db');
+
 const BASE_URL = 'http://localhost:5000/api';
 
 async function runTests() {
   console.log('========================================================');
   console.log('  RUNNING P.R.A.M.A.N INTEGRATION TEST SUITE           ');
   console.log('========================================================\n');
+
+  // Ensure test evidence is internal vault evidence (courtReviewStatus: 'None') for testing investigator operations
+  await supabase.from('evidence').update({
+    courtReviewStatus: 'None',
+    courtClarificationReason: '',
+    courtReviewedBy: null,
+    courtReviewedAt: null,
+  }).in('evidenceId', ['EV-2026-0001', 'EV-2026-0002']);
 
   let passed = 0;
   let failed = 0;
@@ -71,7 +82,9 @@ async function runTests() {
     });
     const evData = await evRes.json();
     assert(evRes.status === 200 && evData.data.length > 0, 'GET /api/evidence returns seeded evidence record');
-    const sampleEvidence = evData.data[0];
+    const sampleEvidence = evData.data.find(
+      (e) => !e.courtReviewStatus || e.courtReviewStatus === 'None'
+    ) || evData.data[0];
 
     // 7. Verify Evidence Cryptographic Hash
     const verifyRes = await fetch(`${BASE_URL}/evidence/${sampleEvidence._id}/verify`, {
@@ -114,8 +127,8 @@ async function runTests() {
     const usersData = await usersRes.json();
     const currentHolderId = String(sampleEvidence.currentHolder?.id || sampleEvidence.currentHolder?._id || sampleEvidence.currentHolder);
     const recipientUser = usersData.data.find(
-      (u) => (u.role === 'forensic' || u.role === 'court') && String(u.id || u._id) !== currentHolderId
-    ) || usersData.data.find((u) => String(u.id || u._id) !== currentHolderId);
+      (u) => u.role === 'forensic' && String(u.id || u._id) !== currentHolderId
+    ) || usersData.data.find((u) => u.role !== 'admin' && String(u.id || u._id) !== currentHolderId);
     const recipientId = recipientUser.id || recipientUser._id;
 
     const transferRes = await fetch(`${BASE_URL}/custody/transfer`, {
@@ -136,6 +149,83 @@ async function runTests() {
       transferRes.status === 200 &&
       (transferData.data.evidence.currentHolder === recipientId || transferData.data.evidence.currentHolder?.id === recipientId),
       'POST /api/custody/transfer transfers custody'
+    );
+
+    // 10A. Submit to Court blocked while evidence is transferred out
+    const blockedCourtSubmitRes = await fetch(`${BASE_URL}/court/submit/${sampleEvidence._id || sampleEvidence.id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${invToken}`,
+      },
+      body: JSON.stringify({ remarks: 'Premature court submission attempt' }),
+    });
+    assert(
+      blockedCourtSubmitRes.status === 400,
+      'WORKFLOW: Submit to court blocked while custody is transferred out to forensic lab'
+    );
+
+    // 10B. Forensic Officer logs in and returns custody back to case investigator with findings note
+    const forensicLoginRes = await fetch(`${BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'forensic@praman.com', password: 'Forensic@123' }),
+    });
+    const forensicData = await forensicLoginRes.json();
+    const forensicToken = forensicData.data.token;
+
+    // Forensic Officer is forbidden from submitting evidence to court
+    const forensicCourtSubmitRes = await fetch(`${BASE_URL}/court/submit/${sampleEvidence._id || sampleEvidence.id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${forensicToken}`,
+      },
+      body: JSON.stringify({ remarks: 'Forensic submitting to court attempt' }),
+    });
+    assert(
+      forensicCourtSubmitRes.status === 403,
+      'RBAC DENIAL: Forensic Officer forbidden from submitting evidence to court (403 Forbidden)'
+    );
+
+    // Forensic Officer returns custody back to original uploader with note
+    const uploaderId = sampleEvidence.uploadedBy?.id || sampleEvidence.uploadedBy?._id || sampleEvidence.uploadedBy;
+    const returnCustodyRes = await fetch(`${BASE_URL}/custody/transfer`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${forensicToken}`,
+      },
+      body: JSON.stringify({
+        evidenceId: sampleEvidence._id || sampleEvidence.id,
+        toUserId: uploaderId,
+        remarks: 'Forensic analysis completed. Memory acquisition verified without tamper.',
+        noteText: 'Forensic Examination Note: Bit-stream image hash verified (SHA-256 match). No anomalies detected.',
+      }),
+    });
+    const returnCustodyData = await returnCustodyRes.json();
+    assert(
+      returnCustodyRes.status === 200 &&
+      (returnCustodyData.data.evidence.currentHolder === uploaderId || returnCustodyData.data.evidence.currentHolder?.id === uploaderId),
+      'POST /api/custody/transfer returns custody back to case investigator with forensic note'
+    );
+
+    // Duplicate return attempt must be rejected with 400
+    const duplicateReturnRes = await fetch(`${BASE_URL}/custody/transfer`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${forensicToken}`,
+      },
+      body: JSON.stringify({
+        evidenceId: sampleEvidence._id || sampleEvidence.id,
+        toUserId: uploaderId,
+        remarks: 'Duplicate return attempt',
+      }),
+    });
+    assert(
+      duplicateReturnRes.status === 400,
+      'WORKFLOW: Duplicate custody return rejected with 400 when custody is already with investigator'
     );
 
     // 11. Audit Logs (Admin only)
@@ -162,6 +252,22 @@ async function runTests() {
       headers: { Authorization: `Bearer ${invToken}` },
     });
     assert(rbacRes.status === 403, 'RBAC check: Non-admin user receives 403 Forbidden for /api/audit');
+
+    // 14. RBAC Check: Admin forbidden from downloading evidence files directly
+    const adminDlRes = await fetch(`${BASE_URL}/evidence/${sampleEvidence._id}/download`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    assert(adminDlRes.status === 403, 'RBAC check: Admin forbidden from downloading evidence files (403 Forbidden)');
+
+    // 15. Activity Feed Restriction: Non-admin does not receive system activity feed
+    const invStatsRes = await fetch(`${BASE_URL}/dashboard/stats`, {
+      headers: { Authorization: `Bearer ${invToken}` },
+    });
+    const invStatsData = await invStatsRes.json();
+    assert(
+      invStatsRes.status === 200 && (!invStatsData.data.recentActivity || invStatsData.data.recentActivity.length === 0),
+      'System Activity Feed is omitted for non-admin roles in /api/dashboard/stats'
+    );
 
     console.log('\n========================================================');
     console.log(`  TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);

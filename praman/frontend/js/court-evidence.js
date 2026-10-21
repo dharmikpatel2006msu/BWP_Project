@@ -126,6 +126,7 @@ async function loadCourtEvidence() {
             <td>
               <div style="display: flex; gap: 6px;">
                 <a href="court-review.html?id=${ev._id}" class="btn btn-primary btn-sm" title="Open Review Dossier">Review</a>
+                <a href="court-review.html?id=${ev._id}&preview=1" class="btn btn-secondary btn-sm" title="Preview Evidence File">Preview</a>
                 <button onclick="quickCourtVerify('${ev._id}', this)" class="btn btn-secondary btn-sm" title="Verify SHA-256">Verify</button>
                 <a href="custody.html?evidenceId=${ev._id}" class="btn btn-secondary btn-sm" title="View Chain of Custody">Custody</a>
                 <a href="court-report.html?id=${ev._id}" class="btn btn-secondary btn-sm" title="Evidence Report">Report</a>

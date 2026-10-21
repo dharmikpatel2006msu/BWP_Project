@@ -1,8 +1,5 @@
 node_modules/
-.env
-.env.local
-.DS_Store
-Thumbs.db
 backend/uploads/*
 !backend/uploads/.gitkeep
-coverage/
+.env
+.DS_Store

@@ -104,7 +104,7 @@ function requireAuth(allowedRoles = []) {
 
   // 4. Forensic Expert Role Protection
   if (user.role === 'forensic') {
-    const forensicAllowedPages = ['dashboard.html', 'evidence.html', 'custody.html', 'evidence-details.html', 'audit.html', ''];
+    const forensicAllowedPages = ['dashboard.html', 'evidence.html', 'custody.html', 'evidence-details.html', ''];
     if (!forensicAllowedPages.includes(currentFile)) {
       alert(`Access Denied: 'Forensic Expert' role is not authorized to access ${currentFile}`);
       window.location.replace('dashboard.html');
@@ -162,7 +162,8 @@ function initNavigation() {
       sidebarHeader.innerHTML = `
         <span class="brand-badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border-color: rgba(245, 158, 11, 0.3);">JUDICIAL CHAMBER</span>
         <div class="sidebar-title">
-          <span>⚖️</span> P.R.A.M.A.N
+          <svg class="brand-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" style="color: #f59e0b;"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+          <span>P.R.A.M.A.N</span>
         </div>
         <div class="sidebar-subtitle">Court Evidence Admissibility & Verification Node</div>
       `;
@@ -172,27 +173,21 @@ function initNavigation() {
       sidebarNav.innerHTML = `
         <div class="nav-section-title">Judicial Proceedings</div>
         <a href="court-dashboard.html" class="nav-item ${currentPath === 'court-dashboard.html' ? 'active' : ''}">
-          <span class="nav-icon">⚖️</span>
           <span>Court Dashboard</span>
         </a>
         <a href="court-evidence.html" class="nav-item ${currentPath === 'court-evidence.html' ? 'active' : ''}">
-          <span class="nav-icon">📜</span>
           <span>Court Evidence</span>
         </a>
         <a href="court-review.html" class="nav-item ${currentPath === 'court-review.html' ? 'active' : ''}">
-          <span class="nav-icon">🔍</span>
           <span>Court Review</span>
         </a>
         <a href="custody.html" class="nav-item ${currentPath === 'custody.html' ? 'active' : ''}">
-          <span class="nav-icon">⛓️</span>
           <span>Chain of Custody</span>
         </a>
         <a href="court-report.html" class="nav-item ${currentPath === 'court-report.html' ? 'active' : ''}">
-          <span class="nav-icon">🖨️</span>
           <span>Court Reports</span>
         </a>
         <a href="court-activity.html" class="nav-item ${currentPath === 'court-activity.html' ? 'active' : ''}">
-          <span class="nav-icon">⚡</span>
           <span>Court Activity</span>
         </a>
       `;
@@ -209,7 +204,8 @@ function initNavigation() {
       sidebarHeader.innerHTML = `
         <span class="brand-badge">${badgeText}</span>
         <div class="sidebar-title">
-          <span>🛡️</span> P.R.A.M.A.N
+          <svg class="brand-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+          <span>P.R.A.M.A.N</span>
         </div>
         <div class="sidebar-subtitle">Portal for Recording and Managing Authentic Nodes</div>
       `;
@@ -219,11 +215,9 @@ function initNavigation() {
       let navHtml = `
         <div class="nav-section-title">Evidence Workspace</div>
         <a href="dashboard.html" class="nav-item ${currentPath === 'dashboard.html' || currentPath === '' ? 'active' : ''}">
-          <span class="nav-icon">📊</span>
           <span>Dashboard</span>
         </a>
         <a href="evidence.html" class="nav-item ${currentPath === 'evidence.html' ? 'active' : ''}">
-          <span class="nav-icon">📁</span>
           <span>Evidence Vault</span>
         </a>
       `;
@@ -232,7 +226,6 @@ function initNavigation() {
       if (user.role === 'investigator') {
         navHtml += `
           <a href="upload.html" id="nav-upload" class="nav-item ${currentPath === 'upload.html' ? 'active' : ''}">
-            <span class="nav-icon">📤</span>
             <span>Upload Evidence</span>
           </a>
         `;
@@ -241,32 +234,18 @@ function initNavigation() {
       // Chain of Custody: Admin, Investigator, Forensic
       navHtml += `
         <a href="custody.html" class="nav-item ${currentPath === 'custody.html' ? 'active' : ''}">
-          <span class="nav-icon">⛓️</span>
           <span>Chain of Custody</span>
         </a>
       `;
-
-      // Forensic Audit section: Forensic Lab
-      if (user.role === 'forensic') {
-        navHtml += `
-          <div class="nav-section-title">Forensic Audit</div>
-          <a href="audit.html" id="nav-audit" class="nav-item ${currentPath === 'audit.html' ? 'active' : ''}">
-            <span class="nav-icon">📜</span>
-            <span>Audit Logs</span>
-          </a>
-        `;
-      }
 
       // Administration section: Admin ONLY
       if (user.role === 'admin') {
         navHtml += `
           <div class="nav-section-title">Administration</div>
           <a href="audit.html" id="nav-audit" class="nav-item ${currentPath === 'audit.html' ? 'active' : ''}">
-            <span class="nav-icon">📜</span>
             <span>Audit Logs</span>
           </a>
           <a href="users.html" id="nav-users" class="nav-item ${currentPath === 'users.html' ? 'active' : ''}">
-            <span class="nav-icon">👥</span>
             <span>User Management</span>
           </a>
         `;

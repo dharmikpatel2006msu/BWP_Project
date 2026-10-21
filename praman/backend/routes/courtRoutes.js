@@ -19,17 +19,19 @@ const {
   exportCourtCertificateXml,
   submitEvidenceToCourt,
   getCourtAuditLogs,
+  previewCourtEvidence,
 } = require('../controllers/courtController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
 
-// Submission endpoint (Investigator, Forensic, Admin submit evidence to court)
-router.post('/submit/:id', protect, authorize('admin', 'investigator', 'forensic'), submitEvidenceToCourt);
+// Submission endpoint (Investigator, Admin submit evidence to court)
+router.post('/submit/:id', protect, authorize('admin', 'investigator'), submitEvidenceToCourt);
 
 // Court Officer routes (Protected & Authorized for court_officer and admin)
 router.get('/stats', protect, authorize('court_officer', 'admin'), getCourtDashboardStats);
 router.get('/evidence', protect, authorize('court_officer', 'admin'), getCourtEvidenceList);
 router.get('/evidence/:id', protect, authorize('court_officer', 'admin'), getCourtEvidenceById);
+router.get('/evidence/:id/preview', protect, authorize('court_officer', 'admin'), previewCourtEvidence);
 router.post('/evidence/:id/verify', protect, authorize('court_officer', 'admin'), verifyCourtEvidence);
 router.post('/evidence/:id/notes', protect, authorize('court_officer', 'admin'), addCourtNote);
 router.post('/evidence/:id/accept', protect, authorize('court_officer', 'admin'), acceptForCourtRecord);

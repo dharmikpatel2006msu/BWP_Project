@@ -1,3 +1,4 @@
+const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { supabase } = require('../config/db');
@@ -304,6 +305,13 @@ const addCourtNote = async (req, res, next) => {
       });
     }
 
+    if (evidence.courtReviewStatus === 'Requires Clarification') {
+      return res.status(400).json({
+        success: false,
+        message: 'Judicial action paused: Evidence is currently awaiting clarification from the investigator. Cannot add judicial notes until resubmitted.',
+      });
+    }
+
     const currentUserId = req.user.id || req.user._id;
 
     const newNote = {
@@ -366,6 +374,20 @@ const acceptForCourtRecord = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message: 'Access Denied: Evidence is not in court review scope.',
+      });
+    }
+
+    if (evidence.courtReviewStatus === 'Accepted for Court Record') {
+      return res.status(400).json({
+        success: false,
+        message: 'Evidence exhibit has already been formally accepted into the court record.',
+      });
+    }
+
+    if (evidence.courtReviewStatus === 'Requires Clarification') {
+      return res.status(400).json({
+        success: false,
+        message: 'Judicial action paused: Evidence is currently awaiting clarification from the investigator. Cannot accept until resubmitted.',
       });
     }
 
@@ -437,6 +459,20 @@ const requestClarification = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message: 'Access Denied: Evidence is not in court review scope.',
+      });
+    }
+
+    if (evidence.courtReviewStatus === 'Accepted for Court Record') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot request clarification: Evidence exhibit has already been formally accepted into the court record.',
+      });
+    }
+
+    if (evidence.courtReviewStatus === 'Requires Clarification') {
+      return res.status(400).json({
+        success: false,
+        message: 'Clarification has already been requested. Awaiting resubmission by the investigator.',
       });
     }
 
@@ -727,10 +763,30 @@ const submitEvidenceToCourt = async (req, res, next) => {
       });
     }
 
-    if (evidence.courtReviewStatus && evidence.courtReviewStatus !== 'None') {
+    const isResubmission = evidence.courtReviewStatus === 'Requires Clarification';
+    if (evidence.courtReviewStatus && evidence.courtReviewStatus !== 'None' && !isResubmission) {
       return res.status(400).json({
         success: false,
         message: `This evidence has already been submitted to the court (Current status: ${evidence.courtReviewStatus}).`,
+      });
+    }
+
+    // Role check: Only the case investigator or system administrator can submit evidence to court
+    if (req.user.role !== 'admin' && req.user.role !== 'investigator') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access Denied: Only the case investigator can submit evidence to the court.',
+      });
+    }
+
+    // Block court submission if evidence is currently transferred/assigned out and not yet returned
+    const uploaderId = String(evidence.uploadedBy?.id || evidence.uploadedBy?._id || evidence.uploadedBy);
+    const currentHolderId = String(evidence.currentHolder?.id || evidence.currentHolder?._id || evidence.currentHolder);
+
+    if (uploaderId && currentHolderId && uploaderId !== currentHolderId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot submit to court: Evidence is currently assigned/transferred to another officer or forensic lab. Custody must be returned to the primary case investigator before court submission.',
       });
     }
 
@@ -766,6 +822,7 @@ const submitEvidenceToCourt = async (req, res, next) => {
 
     const updatePayload = {
       courtReviewStatus: 'Pending Court Review',
+      courtClarificationReason: isResubmission && evidence.courtClarificationReason ? `Resolved: ${evidence.courtClarificationReason}` : '',
       updatedAt: now,
     };
     if (courtOfficer) {
@@ -782,24 +839,28 @@ const submitEvidenceToCourt = async (req, res, next) => {
     await supabase.from('custody_logs').insert({
       id: crypto.randomUUID(),
       evidence: evidence.id,
-      action: 'SUBMITTED_TO_COURT',
+      action: isResubmission ? 'COURT_RESUBMITTED' : 'SUBMITTED_TO_COURT',
       fromUser: currentUserId,
       toUser: courtOfficer ? courtOfficer.id : null,
       performedBy: currentUserId,
-      remarks: remarks ? remarks.trim() : `Evidence formally submitted for judicial court review.`,
+      remarks: remarks ? remarks.trim() : (isResubmission ? 'Evidence resubmitted with clarification response.' : 'Evidence formally submitted for judicial court review.'),
       timestamp: now,
     });
 
     await logAudit({
       req,
-      action: 'STATUS_CHANGED',
+      action: isResubmission ? 'COURT_CLARIFICATION_RESUBMITTED' : 'STATUS_CHANGED',
       evidenceId: evidence.id,
-      details: `Evidence ${evidence.evidenceId} submitted to court for review by ${req.user.name}`,
+      details: isResubmission
+        ? `Evidence ${evidence.evidenceId} resubmitted to court with clarification by ${req.user.name}`
+        : `Evidence ${evidence.evidenceId} submitted to court for review by ${req.user.name}`,
     });
 
     res.status(200).json({
       success: true,
-      message: 'Evidence successfully submitted for court review.',
+      message: isResubmission
+        ? 'Evidence successfully resubmitted to court with clarification response.'
+        : 'Evidence formally submitted for judicial court review.',
       data: formatRecord(updatedEvidence || evidence),
     });
   } catch (err) {
@@ -845,6 +906,76 @@ const getCourtAuditLogs = async (req, res, next) => {
   }
 };
 
+// @desc    Preview court evidence file inline
+// @route   GET /api/court/evidence/:id/preview
+// @access  Private (court_officer, admin)
+const previewCourtEvidence = async (req, res, next) => {
+  try {
+    const evidence = await findEvidence(req.params.id);
+
+    if (!evidence) {
+      return res.status(404).json({
+        success: false,
+        message: 'Evidence record not found.',
+      });
+    }
+
+    if (!isAuthorizedForCourt(evidence, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access Denied: Evidence is not in court review scope.',
+      });
+    }
+
+    if (!fs.existsSync(evidence.filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Physical evidence file is not present on the server storage.',
+      });
+    }
+
+    const ext = path.extname(evidence.originalFilename || evidence.filePath).toLowerCase();
+    let mimeType = evidence.mimeType || 'application/octet-stream';
+
+    const mimeMap = {
+      '.pdf': 'application/pdf',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.svg': 'image/svg+xml',
+      '.txt': 'text/plain; charset=utf-8',
+      '.log': 'text/plain; charset=utf-8',
+      '.json': 'application/json',
+      '.csv': 'text/plain; charset=utf-8',
+      '.mp3': 'audio/mpeg',
+      '.wav': 'audio/wav',
+      '.mp4': 'video/mp4',
+      '.webm': 'video/webm',
+      '.html': 'text/plain; charset=utf-8',
+      '.bin': 'application/octet-stream',
+    };
+
+    if (mimeMap[ext]) {
+      mimeType = mimeMap[ext];
+    }
+
+    await logAudit({
+      req,
+      action: 'COURT_EVIDENCE_PREVIEWED',
+      evidenceId: evidence.id,
+      details: `Court Officer ${req.user.name} inspected/previewed physical evidence file: ${evidence.originalFilename} (${evidence.evidenceId})`,
+    });
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `inline; filename="${evidence.originalFilename}"`);
+    fs.createReadStream(evidence.filePath).pipe(res);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getCourtDashboardStats,
   getCourtEvidenceList,
@@ -858,4 +989,5 @@ module.exports = {
   exportCourtCertificateXml,
   submitEvidenceToCourt,
   getCourtAuditLogs,
+  previewCourtEvidence,
 };

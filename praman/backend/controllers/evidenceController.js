@@ -241,14 +241,28 @@ const getEvidenceById = async (req, res, next) => {
       });
     }
 
-    // Need-to-Know check for Forensic Expert: must be assigned or current holder
+    // Need-to-Know check for Forensic Expert: must be assigned, current holder, or have participated in the custody chain
     const currentUserId = String(req.user.id || req.user._id);
     if (req.user.role === 'forensic') {
       const isHolder = evidence.currentHolder && String(evidence.currentHolder) === currentUserId;
       const isUploader = evidence.uploadedBy && String(evidence.uploadedBy) === currentUserId;
       const isAssigned = evidence.courtAssignedTo && String(evidence.courtAssignedTo) === currentUserId;
 
-      if (!isHolder && !isUploader && !isAssigned) {
+      let isAuthorized = isHolder || isUploader || isAssigned;
+      if (!isAuthorized) {
+        // Also permit forensic expert to inspect evidence they previously handled/returned in chain of custody
+        const { count: logCount } = await supabase
+          .from('custody_logs')
+          .select('*', { count: 'exact', head: true })
+          .eq('evidence', evidence.id)
+          .or(`fromUser.eq.${currentUserId},toUser.eq.${currentUserId},performedBy.eq.${currentUserId}`);
+
+        if (logCount && logCount > 0) {
+          isAuthorized = true;
+        }
+      }
+
+      if (!isAuthorized) {
         return res.status(403).json({
           success: false,
           message: 'Access Denied: Forensic Expert workspace is restricted to assigned evidence cases only.',
@@ -409,6 +423,18 @@ const addEvidenceNote = async (req, res, next) => {
       });
     }
 
+    // Lock adding notes while evidence is under judicial court review or accepted into court record
+    // Only activated when judge explicitly requests clarification
+    if (evidence.courtReviewStatus && evidence.courtReviewStatus !== 'None' && evidence.courtReviewStatus !== 'Requires Clarification') {
+      const msg = evidence.courtReviewStatus === 'Accepted for Court Record'
+        ? 'Adding notes is prohibited: This evidence has been formally accepted into the official court record.'
+        : `Adding notes is locked while evidence is under active judicial court review (${evidence.courtReviewStatus}).`;
+      return res.status(400).json({
+        success: false,
+        message: msg,
+      });
+    }
+
     const currentUserId = req.user.id || req.user._id;
 
     const newNote = {
@@ -523,6 +549,14 @@ const updateEvidenceStatus = async (req, res, next) => {
 // @access  Private
 const downloadEvidence = async (req, res, next) => {
   try {
+    // Strict Limitation: System Admin is an observer for governance and cannot download evidence files
+    if (req.user.role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Strict Security Limitation: System Admin is an observer for governance and cannot download evidence files.',
+      });
+    }
+
     const evidence = await findEvidenceByIdOrCode(req.params.id);
     if (!evidence) {
       return res.status(404).json({
@@ -544,6 +578,68 @@ const downloadEvidence = async (req, res, next) => {
   }
 };
 
+// @desc    Preview stored evidence file inline
+// @route   GET /api/evidence/:id/preview
+// @access  Private
+const previewEvidence = async (req, res, next) => {
+  try {
+    if (req.user.role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Strict Security Limitation: System Admin is an observer for governance and cannot preview evidence files.',
+      });
+    }
+
+    const evidence = await findEvidenceByIdOrCode(req.params.id);
+    if (!evidence) {
+      return res.status(404).json({
+        success: false,
+        message: 'Evidence not found.',
+      });
+    }
+
+    if (!fs.existsSync(evidence.filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Physical file is not present on the server storage.',
+      });
+    }
+
+    const ext = path.extname(evidence.originalFilename || evidence.filePath).toLowerCase();
+    let mimeType = evidence.mimeType || 'application/octet-stream';
+
+    const mimeMap = {
+      '.pdf': 'application/pdf',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.svg': 'image/svg+xml',
+      '.txt': 'text/plain; charset=utf-8',
+      '.log': 'text/plain; charset=utf-8',
+      '.json': 'application/json',
+      '.csv': 'text/plain; charset=utf-8',
+      '.mp3': 'audio/mpeg',
+      '.wav': 'audio/wav',
+      '.mp4': 'video/mp4',
+      '.webm': 'video/webm',
+      '.html': 'text/plain; charset=utf-8',
+      '.bin': 'application/octet-stream',
+    };
+
+    if (mimeMap[ext]) {
+      mimeType = mimeMap[ext];
+    }
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `inline; filename="${evidence.originalFilename}"`);
+    fs.createReadStream(evidence.filePath).pipe(res);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   uploadEvidence,
   getEvidenceList,
@@ -552,4 +648,5 @@ module.exports = {
   addEvidenceNote,
   updateEvidenceStatus,
   downloadEvidence,
+  previewEvidence,
 };
