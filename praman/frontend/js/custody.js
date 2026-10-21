@@ -116,9 +116,7 @@ async function loadCustodyTimeline(evidenceId) {
             const icon = getActionIcon(item.action);
 
             let metaText = `Logged by <strong>${escapeHtml(item.performedBy?.name || 'System')}</strong> (${item.performedBy?.role || ''})`;
-            if (item.action === 'CUSTODY_RETURNED' && item.toUser) {
-              metaText = `Custody returned from <strong>${escapeHtml(item.fromUser?.name || 'Forensic Expert')}</strong> back to case investigator <strong>${escapeHtml(item.toUser?.name || 'Investigator')}</strong> (${item.toUser?.role || ''})`;
-            } else if (item.action === 'TRANSFERRED' && item.toUser) {
+            if (item.action === 'TRANSFERRED' && item.toUser) {
               metaText = `Transferred from <strong>${escapeHtml(item.fromUser?.name || 'Previous Custodian')}</strong> to <strong>${escapeHtml(item.toUser?.name || 'New Custodian')}</strong> (${item.toUser?.role || ''})`;
             }
 
@@ -157,7 +155,6 @@ function getMarkerClass(action) {
     case 'VERIFIED':
       return 'marker-verify';
     case 'TRANSFERRED':
-    case 'CUSTODY_RETURNED':
       return 'marker-transfer';
     case 'STATUS_CHANGED':
       return 'marker-status';
@@ -176,24 +173,22 @@ function getMarkerClass(action) {
 function getActionIcon(action) {
   switch (action) {
     case 'UPLOADED':
-      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+      return '📥';
     case 'VERIFIED':
-      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>';
+      return '🛡️';
     case 'TRANSFERRED':
-      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
-    case 'CUSTODY_RETURNED':
-      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>';
+      return '🔄';
     case 'STATUS_CHANGED':
-      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>';
+      return '⚡';
     case 'NOTE_ADDED':
-      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+      return '📝';
     case 'SUBMITTED_TO_COURT':
-      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>';
+      return '🏛️';
     case 'COURT_REVIEWED':
     case 'COURT_ACCEPTED':
-      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>';
+      return '⚖️';
     default:
-      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/></svg>';
+      return '●';
   }
 }
 
@@ -205,8 +200,6 @@ function formatActionLabel(action) {
       return 'Cryptographic Integrity Check';
     case 'TRANSFERRED':
       return 'Custody Transfer';
-    case 'CUSTODY_RETURNED':
-      return 'Custody Returned to Investigator';
     case 'STATUS_CHANGED':
       return 'Case Status Modification';
     case 'NOTE_ADDED':

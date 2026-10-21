@@ -17,8 +17,7 @@
       <div class="sidebar-header">
         <span class="brand-badge" style="background: rgba(201, 130, 15, 0.16); color: #f59e0b;">Judicial Chamber</span>
         <div class="sidebar-title">
-          <svg class="brand-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" style="color: #f59e0b;"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
-          <span>P.R.A.M.A.N</span>
+          <span>⚖️</span> P.R.A.M.A.N
         </div>
         <div class="sidebar-subtitle">Court Evidence Admissibility & Verification Node</div>
       </div>
@@ -26,21 +25,27 @@
       <nav class="sidebar-nav">
         <div class="nav-section-title">Judicial Proceedings</div>
         <a href="court-dashboard.html" class="nav-item">
+          <span class="nav-icon">⚖️</span>
           <span>Court Dashboard</span>
         </a>
         <a href="court-evidence.html" class="nav-item">
+          <span class="nav-icon">📜</span>
           <span>Court Evidence</span>
         </a>
         <a href="court-review.html" class="nav-item active">
+          <span class="nav-icon">🔍</span>
           <span>Court Review</span>
         </a>
         <a href="custody.html" class="nav-item">
+          <span class="nav-icon">⛓️</span>
           <span>Chain of Custody</span>
         </a>
         <a href="court-report.html" class="nav-item">
+          <span class="nav-icon">🖨️</span>
           <span>Court Reports</span>
         </a>
         <a href="court-activity.html" class="nav-item">
+          <span class="nav-icon">⚡</span>
           <span>Court Activity</span>
         </a>
       </nav>
@@ -54,7 +59,7 @@
           </div>
         </div>
         <button id="btn-logout" class="btn-logout">
-          Sign Out
+          <span>🚪</span> Sign Out
         </button>
       </div>
     </aside>
@@ -112,26 +117,22 @@
               <!-- Judicial Action Toolbar -->
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <button id="btn-court-verify" class="btn btn-primary">
-                  Verify Integrity
-                </button>
-                <button id="btn-court-preview" class="btn btn-secondary" title="Inspect exhibit file content">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" style="margin-right: 4px; vertical-align: middle;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  Preview Evidence
+                  <span>🛡️</span> Verify Integrity
                 </button>
                 <button id="btn-open-accept" class="btn btn-success">
-                  Accept for Court Record
+                  <span>✅</span> Accept for Court Record
                 </button>
                 <button id="btn-open-clarification" class="btn btn-danger">
-                  Request Clarification
+                  <span>❓</span> Request Clarification
                 </button>
                 <button id="btn-open-court-note" class="btn btn-secondary">
-                  Add Court Note
+                  <span>📝</span> Add Court Note
                 </button>
                 <a id="btn-court-custody" href="custody.html" class="btn btn-secondary">
-                  View Custody
+                  <span>⛓️</span> View Custody
                 </a>
                 <a id="btn-court-report" href="court-report.html" class="btn btn-secondary">
-                  Report View
+                  <span>🖨️</span> Report View
                 </a>
               </div>
             </div>
@@ -155,7 +156,7 @@
             <div class="card">
               <div class="card-header">
                 <div class="card-title">
-                  Evidentiary Provenance & Custody State
+                  <span>📋</span> Evidentiary Provenance & Custody State
                 </div>
               </div>
 
@@ -202,7 +203,7 @@
             <div class="card">
               <div class="card-header">
                 <div class="card-title">
-                  Evidentiary Notes & Observations
+                  <span>📝</span> Evidentiary Notes & Observations
                 </div>
               </div>
               <div id="court-notes-container">
@@ -281,45 +282,6 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="btn-cancel-note">Cancel</button>
         <button type="button" class="btn btn-primary" id="btn-submit-court-note">Record Court Note</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 4: Judicial Evidence Preview Modal -->
-  <div class="modal-backdrop" id="modal-court-preview">
-    <div class="modal-dialog modal-dialog-preview">
-      <div class="modal-header">
-        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-          <h3 style="margin: 0;">Judicial Evidence Preview</h3>
-          <span class="mono" id="preview-exhibit-id" style="font-weight: 700; color: var(--accent); font-size: 13px;"></span>
-          <span class="badge badge-secondary" id="preview-file-badge"></span>
-        </div>
-        <span class="modal-close" id="btn-close-preview">&times;</span>
-      </div>
-      <div class="modal-body" style="padding: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; color: var(--text-secondary); flex-wrap: wrap; gap: 8px;">
-          <div>
-            Exhibit File: <strong id="preview-filename" style="color: var(--text-primary);">...</strong>
-            (<span id="preview-filesize">...</span>)
-          </div>
-          <div style="display: flex; gap: 8px;">
-            <a id="btn-preview-newtab" href="#" target="_blank" class="btn btn-secondary btn-sm" title="Open full screen in a new tab">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: middle;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              Open in New Window
-            </a>
-          </div>
-        </div>
-
-        <div id="preview-container" class="preview-content-box">
-          <p style="color: var(--text-secondary); font-size: 13px;">Loading exhibit file preview...</p>
-        </div>
-      </div>
-      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div style="font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--success);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-          Cryptographic custody maintained. Read-only judicial inspection mode.
-        </div>
-        <button type="button" class="btn btn-secondary" id="btn-dismiss-preview">Close Preview</button>
       </div>
     </div>
   </div>

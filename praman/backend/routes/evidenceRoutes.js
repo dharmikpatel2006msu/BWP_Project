@@ -8,7 +8,6 @@ const {
   addEvidenceNote,
   updateEvidenceStatus,
   downloadEvidence,
-  previewEvidence,
 } = require('../controllers/evidenceController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
@@ -20,10 +19,9 @@ router
   .get(protect, getEvidenceList)
   .post(protect, authorize('investigator'), upload.single('file'), uploadEvidence);
 
-// Specific evidence details & download & preview
+// Specific evidence details & download
 router.get('/:id', protect, getEvidenceById);
 router.get('/:id/download', protect, downloadEvidence);
-router.get('/:id/preview', protect, previewEvidence);
 
 // Verification (All evidence custodians / officers with access can verify integrity)
 router.post('/:id/verify', protect, verifyEvidence);

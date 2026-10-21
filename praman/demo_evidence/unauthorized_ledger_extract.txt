@@ -1,0 +1,23 @@
+CONFIDENTIAL FORENSIC EXHIBIT - CYBER CRIME INVESTIGATION DIVISION
+CASE NUMBER: CR-2026-9042
+EVIDENCE CLASSIFICATION: Server Audit & Ledger Extraction
+SEIZING OFFICER: Inspector Vikram Patel (Badge #8821)
+DATE OF SEIZURE: 2026-09-14 09:30:00 IST
+LOCATION: Node #4 High-Security Server Vault
+
+=== EXTRACTION SUMMARY ===
+Source Device: Dell PowerEdge R750 (IP: 192.168.10.45)
+Operating System: Red Hat Enterprise Linux 9.2
+Storage Volume: /dev/mapper/rootvg-lv_audit
+
+[08:12:00 UTC] USER AUTH: account 'sysadmin_backup' logged in from 10.0.4.12
+[08:13:15 UTC] DB QUERY: SELECT * FROM corporate_treasury_ledger WHERE amount > 1000000;
+[08:14:22 UTC] CASH TRANSFER INITIATED: TxID: 0x98f2b3e891c201
+                Amount: INR 4,500,000.00
+                Beneficiary: Offshore Account AE940381023910
+                Status: APPROVED (FORCED OVERRIDE)
+[08:16:04 UTC] CMD EXEC: 'rm -rf /var/log/secure*' (INTERCEPTED BY HONEYPOT)
+[08:19:40 UTC] SYSTEM ALERT: Physical tamper sensor triggered on Rack 004
+
+Integrity verification required under Section 65B, Indian Evidence Act.
+=== END OF FORENSIC DUMP ==
